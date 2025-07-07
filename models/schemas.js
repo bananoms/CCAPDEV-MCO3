@@ -20,7 +20,7 @@ const reservationsSchema = new Schema ({
     seat: {type:String, required:true},
     lab: {type:String, required:true, enum:['GK101A', 'GK304A', 'GK304B', 'AG702', 'AG1904', 'LS209', 'LS311']},
     reqDate: {type:Date, required:true, default:Date.now},
-    resDate: {type:Date, required:true},
+    resDate: {type:Date, required:true}, //Time frame of reservation
     anon: {type:Boolean, required:true},
     user: {type:Schema.Types.ObjectId, ref:'profile'},
     reservedStud: {type:Number}
