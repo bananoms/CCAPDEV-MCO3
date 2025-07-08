@@ -5,14 +5,10 @@ var router = express.Router();
 
 const controller = require('../controllers/controller');
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index');
-});
 
-/* GET about page */
-router.get('/about', function(req, res, next) {
-  res.render('about');
-})
+router.get('/', controller.homePage);
+router.get('/about', controller.aboutPage);
+
+/* Admin Functions*/
 
 module.exports = router;
