@@ -1,0 +1,20 @@
+extends layout
+
+block content
+    .login_block
+        img#picture(src="")
+        h1 Welcome Back
+        p Please Login to your Laboratory Account
+
+        form
+            .input_wrapper
+                label(for="email")
+                input(type="email" id="email" placeholder="DLSU Email")
+            .input_wrapper
+                label(for="password")
+                input(type="password" id="password" placeholder="Password")
+            .input_wrapper
+                button(type="submit" class="button_small") Login
+
+        p Don't have an account?
+            a(href="/sign-up") Sign up
