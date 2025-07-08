@@ -5,5 +5,15 @@ html
     link(rel='stylesheet', href='/stylesheets/style.css')
   header
     nav //- TODO PUT NAVBAR ELEMENTS HERE
-      a(href="/")
-        .navbar-expand
+      form
+        .input_wrapper
+          label(for="search_user")
+          input(type="text" id="search_user")
+      ul
+        li
+          a(href="/") Home
+        li
+          a(href="/about") About
+        li
+          a(href="/log-in") Log In
+    block content
