@@ -1,13 +1,32 @@
 extends layout.pug
 
 block content
-    .profiles
-        ul
-            li Matthew Copon
-            li Lucas Tujan
-            li Gelo Gonzales
-            li Royce Benavidez
+    .about.container.my-5
+      .row.text-center
+        .col-md-3.col-sm-6.mb-4
+          a(href="/profile-royce")
+            button.btn.about-btn
+              img.profile-pic(src="/royce-pfp.png", alt="Royce Benavidez")
+              h3.mt-2 Royce Benavidez
 
-    .modules_used
-        h2 Modules Used
-        p ANO BA GINAMIT NATIN HAHAHA basta nasa package.json yun amputa
+        .col-md-3.col-sm-6.mb-4
+          a(href="/profile-matthew")
+            button.btn.about-btn
+              img.profile-pic(src="/matthew-pfp.jpg", alt="Matthew Copon")
+              h3.mt-2 Matthew Copon
+
+        .col-md-3.col-sm-6.mb-4
+          a(href="/profile-gelo")
+            button.btn.about-btn
+              img.profile-pic(src="/gelo-pfp.jpg", alt="Gelo Gonzalez")
+              h3.mt-2 Gelo Gonzalez
+
+        .col-md-3.col-sm-6.mb-4
+          a(href="/profile-nio")
+            button.btn.about-btn
+              img.profile-pic(src="/nio-pfp.jpg", alt="Lucas Tujan")
+              h3.mt-2 Lucas Tujan
+
+    .about-box.text-center.my-4
+      h2 Modules Used:
+      h4 Bootstrap
