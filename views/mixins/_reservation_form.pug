@@ -184,7 +184,7 @@ block content
         const nextBtn = document.getElementById('next-btn');
         
         // Enable next button if at least one dropdown has a selection
-        nextBtn.disabled = !(buildingSelect.value || roomSelect.value);
+        nextBtn.disabled = (buildingSelect.value && roomSelect.value);
       }
       
       // Add event listeners when page loads
@@ -212,6 +212,10 @@ block content
             cell.addEventListener('click', function() {
               selectCell(this);
             });
+            cell.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            deselectCell(event.currentTarget);
+            });
             row.appendChild(cell);
           }
           
@@ -226,11 +230,6 @@ block content
         // Find all cells in the same row
         const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
         
-        // Remove selection from all cells in the row
-        rowCells.forEach(cell => {
-          cell.classList.remove('selected');
-        });
-        
         // Add selection to clicked cell and all cells to its left
         rowCells.forEach(cell => {
           if (parseInt(cell.dataset.col) == col || (parseInt(cell.dataset.col)) == col+1 || (parseInt(cell.dataset.col)) == col-1) {
@@ -241,6 +240,23 @@ block content
         // Update selected cells array for this row
         selectedCells[row] = col;
       }
+      function deselectCell(clickedCell) {
+      const row = parseInt(clickedCell.dataset.row);
+      const col = parseInt(clickedCell.dataset.col);
+      
+      const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
+
+      rowCells.forEach(cell => {
+        const cellCol = parseInt(cell.dataset.col);
+        if (cellCol === col) {
+          cell.classList.remove("selected");
+        }
+      });
+
+      delete selectedCells[row];
+      }
+
+
       
       function nextStep() {
         const buildingSelect = document.getElementById('building_select');
