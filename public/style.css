@@ -1,0 +1,292 @@
+@import url('css/satoshi.css');
+* {
+  font-family: Satoshi-Variable;
+  color:#11414E;
+  font-size:16px;
+}
+
+body {
+  background-color: #11414E;
+}
+h1{
+  font-size: 64px;
+  font-weight: 800;
+  margin-bottom: 0px;
+}
+h2{
+  font-size: 40px;
+  font-weight: 800;
+}
+p{
+  margin-bottom: 25px;
+}
+.main-btn{
+  background-color:#11414E;
+  color:#FAD465;
+  font-weight: 500;
+  font-size: 20px;
+  width: 418px;
+}
+.content-box button:hover {
+  background-color: #3f7e8f;
+  color:#FAD465;
+}
+.content-box {
+  background-color: #FAEECF;
+  border-radius: 30px;
+  padding: 60px 30px;
+  max-width: 900px;
+  margin: 80px auto;
+  text-align: center;
+}
+.form-select {
+  max-width: 200px;
+  display: inline-block;
+  margin: 10px;
+}
+.navbar {
+  background-color: #FAEECF;
+  padding: 10px 20px;
+}
+.search-input {
+  width: 200px;
+}
+.nav-link {
+  color: #11414E !important;
+  padding: 5px 10px 5px 20px;
+  font-weight: 100;
+  font-size:20px;
+}
+.navbar-brand{
+  color: #11414E !important;
+  font-size: 30px;
+  font-weight: 500;
+}
+.login .content-box
+{
+  max-width: 1100px;
+  max-height: 800px;
+  text-align: left;
+  margin: 20px auto;
+}
+.submit-fields
+{
+  text-align: center;
+  margin-top: 25px;
+}
+.login .signup
+{
+  text-align: center;
+  margin-top: 5px;
+}
+.login input {
+  width: 470px;
+  padding: 12px;
+  margin-bottom: 7px;
+  border: 1px solid #ffffff;
+  border-radius: 6px;
+  font-size: 16px;
+}
+.login h1
+{
+  margin-bottom: 0px;
+}
+.input-fields
+{
+  padding-right: 40px;
+}
+.signup a {
+  color: #11414E;
+  font-weight: 900;
+  text-decoration: none;
+}
+.signup a:hover {
+  text-decoration: underline;
+}
+.container-profile {
+  display: grid;
+  grid-template-areas:
+            "main sidebar";
+  grid-template-columns: 2fr 1fr;
+  margin: auto;
+  gap: 15px;
+}
+img.profile-pic {
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+}
+.profile-box button:hover {
+  background-color: #3f7e8f;
+  color:#FAD465;
+}
+.profile-box {
+  background-color: #FAEECF;
+  border-radius: 30px;
+  padding: 40px;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  margin: 60px auto;
+  max-width: 1400px;
+}
+.profile-btn{
+  background-color:#11414E;
+  color:#FAD465;
+  font-weight: 500;
+  font-size: 20px;
+  width: 418px;
+}
+.notif-box {
+  background-color: #FAEECF;
+  border-radius: 30px;
+  padding: 40px;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  margin: 60px auto;
+  max-width: 1400px;
+}
+.notif-box a.order-by {
+  color: #11414E;
+  text-decoration: none;
+}
+.notif-btn {
+  background-color:#D9D9D9;
+  color:#11414E;
+  font-weight: 500;
+  font-size: 20px;
+  width: 418px;
+}
+.notif-box button:hover {
+  background-color: #11414E;
+  color:#D9D9D9;
+}
+.sidebar .profile-box {
+  padding: 40px 30px;
+}
+.order-by {
+  font-weight: 600;
+  color: #11414E;
+  margin-bottom: 15px;
+  display: inline-block;
+}
+.profile-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.reservation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.left-profile {
+  flex: 2;
+}
+.right-buttons {
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: stretch;
+  margin-top: 20px;
+}
+.login-container {
+  display: flex;
+  background-color: #FAEECF;
+  border-radius: 12px;
+  margin: 40px 10px 40px 10px;
+  overflow: hidden;
+}
+.image-panel {
+  flex: 1;
+  background-image: url('lab-img.jpg');
+  background-size: cover;
+  background-position: center;
+  border-top-right-radius: 50px;
+  border-bottom-left-radius: 50px;
+  margin: 30px;
+}
+
+.login-container .form-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 60px;
+  padding-top: 30px;
+  color: #0b2d36;
+}
+
+.form-panel p {
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  background-color: #fff;
+}
+.name-input{
+  width:50%;
+}
+@media (max-width: 900px) {
+  .main-container {
+    flex-direction: column;
+    height: auto;
+  }
+  .image-panel {
+    height: 300px;
+    margin: 20px;
+    border-radius: 20px;
+  }
+  .form-panel {
+    padding: 40px 20px;
+  }
+}
+.about .container{
+  margin: 50px auto;
+  text-align: center;
+}
+
+.about .about-btn {
+  background-color: #FAEECF;
+  border-radius: 12px;
+  text-align: center;
+  height: 350px;
+  color: #0b2d36;
+}
+
+.about .about-btn img{
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.about .about-btn h3{
+  gap: 20px;
+}
+
+.about button:hover {
+  background-color: #3f7e8f;
+  color:#FAEECF;
+}
+.about-box {
+  background-color: #FAEECF;
+  border-radius: 30px;
+  padding: 60px 30px;
+  max-width: 1300px;
+  margin: 80px auto;
+  text-align: center;
+}
