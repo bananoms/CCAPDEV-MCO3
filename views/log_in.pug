@@ -1,20 +1,19 @@
-extends layout
+extends layout.pug
 
 block content
-    .login_block
-        img#picture(src="")
-        h1 Welcome Back
+    .login-container
+      .image-panel
+      .form-panel
+        h1 Welcome Back!
         p Please Login to your Laboratory Account
-
-        form
-            .input_wrapper
-                label(for="email")
-                input(type="email" id="email" placeholder="DLSU Email")
-            .input_wrapper
-                label(for="password")
-                input(type="password" id="password" placeholder="Password")
-            .input_wrapper
-                button(type="submit" class="button_small") Login
-
-        p Don't have an account?
-            a(href="/sign-up") Sign up
+        form(method="POST", action="/login")
+          .form-group
+            input.form-control(type="email", placeholder="Email Address", required)
+          .form-group
+            input.form-control(type="password", placeholder="Password", required)
+          .submit-fields.mt-3
+            .buttn
+              button.btn.main-btn(type="submit") Login
+              p.signup.mt-2
+                | Don't have an account?  
+                a(href="/signup")   Sign up
