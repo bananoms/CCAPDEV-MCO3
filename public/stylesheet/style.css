@@ -1,4 +1,3 @@
-@import url('css/satoshi.css');
 * {
   font-family: Satoshi-Variable;
   color:#11414E;
@@ -204,7 +203,7 @@ img.profile-pic {
 }
 .image-panel {
   flex: 1;
-  background-image: url('lab-img.jpg');
+  background-image: url('../images/lab-img.jpg');
   background-size: cover;
   background-position: center;
   border-top-right-radius: 50px;
