@@ -1,52 +1,53 @@
 const schemas = require('../models/schemas');
-const Reservation = schemas.reservations;
+const Reservations = schemas.reservations;
 
 exports.reservePageGet = (req,res) => {
     res.render('index');
 }
 
 exports.reservePagePost = async (req, res) => {
-    console.log("HELLO2")
     try {
-        // Log the incoming data for debugging
         console.log('Received data:', req.body);
 
-        // Get the data from the request body
-        const { lab, resDate, anon, selectedCells } = req.body;
-
-        // Validate required fields
-        if (!lab || !resDate || !selectedCells) {
-            throw new Error('Missing required fields');
+        if (!req.body.reservation) {
+            throw new Error('Invalid request format: missing reservation data');
         }
 
-        // Get the first selected cell for the seat
-        const firstSelectedCell = selectedCells[Object.keys(selectedCells)[0]];
-        if (!firstSelectedCell || !firstSelectedCell.seat) {
-            throw new Error('No seat selected');
-        }
+        const { seat, lab, reqDate, resDate, anon } = req.body.reservation;
 
-        // Create new reservation document
-        const newReservation = new Reservation({
-            seat: firstSelectedCell.seat,
+        // Validate each required field individually for better error messages
+        if (!seat) throw new Error('Seat is required');
+        if (!lab) throw new Error('Lab is required');
+        if (!resDate || !resDate.start || !resDate.end) throw new Error('Valid reservation dates are required');
+
+        const newReservation = new Reservations({
+            seat: seat,
             lab: lab,
-            reqDate: new Date(), // Current date/time
-            resDate: new Date(resDate),
+            reqDate: new Date(reqDate),
+            resDate: {
+                start: new Date(resDate.start),
+                end: new Date(resDate.end)
+            },
             anon: anon || false,
-            reservedStud: 1
         });
 
-        // Save the reservation
         await newReservation.save();
 
-        // Redirect to confirmation page
-        res.redirect('/confirmation');
+        // Send JSON response instead of redirect
+        res.status(200).json({
+            success: true,
+            message: 'Reservation created successfully'
+        });
 
     } catch (error) {
         console.error('Reservation creation error:', error);
-
+        res.status(400).json({
+            success: false,
+            error: error.message,
+            received: req.body
+        });
     }
 };
-
 
 exports.confirmationPageGet = (req,res) => {
     res.render('confirmation');

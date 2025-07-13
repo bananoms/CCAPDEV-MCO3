@@ -23,7 +23,7 @@ mixin step1()
     button#next-btn.main-btn.mt-3(type="button" onclick="nextStep()" disabled) Show Availability
 
 mixin step2(timeSlots)
-  form#reservationForm.needs-validation(action="/" method="POST" onsubmit="return submitForm(event)" novalidate)
+  .reservation-container#reservationForm
     .step#step2.content-box.text-center.p-4
       h1 Reserve Laboratory Table
       .selection-info
@@ -46,43 +46,43 @@ mixin step2(timeSlots)
               tbody#table-body
       .mt-3
         button.btn.btn-back(type="button" onclick="prevStep()") Back
-        button#submit-btn.btn(type="submit") Submit
+        button#submit-btn.btn(type="button" onclick="submitForm()") Submit
+
 
 mixin scriptBlock()
   script.
     let selectedCells = [];
     let currentActiveRow = null;
-    
-    // Set default date to today
+
     document.addEventListener('DOMContentLoaded', function() {
       const today = new Date();
       const formattedDate = today.toISOString().split('T')[0];
       document.getElementById('date_select').value = formattedDate;
-      document.getElementById('date_select').min = formattedDate; // Prevent selecting past dates
+      document.getElementById('date_select').min = formattedDate;
       createTableRows();
       checkNextButton();
-      updateDateHeader(); // Update the date header on page load
+      updateDateHeader();
     });
-    
+
     function formatDate(dateString) {
       const date = new Date(dateString);
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                     'July', 'August', 'September', 'October', 'November', 'December'];
-      
-      const dayOfWeek = days[date.getDay()]; 
+      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+
+      const dayOfWeek = days[date.getDay()];
       const month = months[date.getMonth()];
       const day = date.getDate();
       const year = date.getFullYear();
-      
+
       return `${dayOfWeek}, ${month} ${day}, ${year}`;
     }
-    
+
     function updateDateHeader() {
       const dateSelect = document.getElementById('date_select');
       const dateHeader = document.getElementById('date-header');
       const formattedDateSpan = document.getElementById('formatted-date');
-      
+
       if (dateSelect.value) {
         const formattedDate = formatDate(dateSelect.value);
         formattedDateSpan.textContent = formattedDate;
@@ -91,55 +91,46 @@ mixin scriptBlock()
         dateHeader.classList.remove('visible');
       }
     }
-    
+
     function checkNextButton() {
       const labSelect = document.getElementById('lab_select');
       const nextBtn = document.getElementById('next-btn');
-      
-      // Enable next button only if lab is selected
-      const hasLab = labSelect.value;
-      nextBtn.disabled = !hasLab;
+      nextBtn.disabled = !labSelect.value;
     }
-    
+
     function checkSubmitButton() {
       const submitBtn = document.getElementById('submit-btn');
       const dateSelect = document.getElementById('date_select');
-      
-      // Enable submit button only if date is selected and at least one cell is selected
-      const hasDate = dateSelect.value;
-      const hasSelectedCells = Object.keys(selectedCells).length > 0;
-      submitBtn.disabled = !(hasDate && hasSelectedCells);
+      submitBtn.disabled = !(dateSelect.value && Object.keys(selectedCells).length > 0);
     }
-    
+
     function createTableRows() {
       const tableBody = document.getElementById('table-body');
-      tableBody.innerHTML = ''; // Clear existing rows
-      
-      // Create seat rows (A1-A8 format for seats)
+      tableBody.innerHTML = '';
+
       for (let i = 1; i <= 8; i++) {
         const row = document.createElement('tr');
         const rowLabel = document.createElement('td');
         rowLabel.textContent = `A${i}`;
         row.appendChild(rowLabel);
-        
+
         for (let j = 1; j <= 29; j++) {
           const cell = document.createElement('td');
           cell.dataset.row = i;
           cell.dataset.col = j;
           cell.dataset.seat = `A${i}`;
           cell.addEventListener('click', function() { selectCell(this); });
-          cell.addEventListener("contextmenu", (event) => { 
-            event.preventDefault(); 
-            deselectCell(event.currentTarget); 
+          cell.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            deselectCell(event.currentTarget);
           });
           row.appendChild(cell);
         }
         tableBody.appendChild(row);
       }
     }
-    
+
     function clearAllSelections() {
-      // Clear all selected cells
       const allSelectedCells = document.querySelectorAll('.selected');
       allSelectedCells.forEach(cell => {
         cell.classList.remove('selected');
@@ -147,28 +138,24 @@ mixin scriptBlock()
       selectedCells = [];
       currentActiveRow = null;
     }
-    
+
     function selectCell(clickedCell) {
       const row = parseInt(clickedCell.dataset.row);
       const col = parseInt(clickedCell.dataset.col);
       const seat = clickedCell.dataset.seat;
-      
-      // If clicking on a different row, clear all selections
+
       if (currentActiveRow !== null && currentActiveRow !== row) {
         clearAllSelections();
       }
-      
-      // Set the current active row
+
       currentActiveRow = row;
-      
-      // Check if this cell is already selected
+
       const isAlreadySelected = clickedCell.classList.contains('selected');
-      
+
       if (isAlreadySelected) {
-        // If clicking on a selected cell, deselect it and all cells after it
         const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
         let foundClickedCell = false;
-        
+
         rowCells.forEach(cell => {
           const cellCol = parseInt(cell.dataset.col);
           if (cellCol === col) {
@@ -180,29 +167,24 @@ mixin scriptBlock()
           }
         });
       } else {
-        // Find the range of currently selected cells
         const currentSelectedCols = Object.keys(selectedCells).map(key => parseInt(key)).sort((a, b) => a - b);
-        
+
         if (currentSelectedCols.length === 0) {
-          // No cells selected, just select this one
           clickedCell.classList.add('selected');
           selectedCells[col] = {
             seat: seat,
             timeSlot: col
           };
         } else {
-          // Extend selection to include this cell (fill gaps)
           const minCol = Math.min(...currentSelectedCols, col);
           const maxCol = Math.max(...currentSelectedCols, col);
-          
-          // Clear current selection and select continuous range
+
           const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
           rowCells.forEach(cell => {
             cell.classList.remove('selected');
           });
           selectedCells = {};
-          
-          // Select all cells in the range
+
           for (let i = minCol; i <= maxCol; i++) {
             const cellToSelect = document.querySelector(`td[data-row="${row}"][data-col="${i}"]`);
             if (cellToSelect) {
@@ -217,25 +199,21 @@ mixin scriptBlock()
       }
       checkSubmitButton();
     }
-    
+
     function deselectCell(clickedCell) {
       const row = parseInt(clickedCell.dataset.row);
       const col = parseInt(clickedCell.dataset.col);
-      
-      // Only allow deselection if this is the active row
+
       if (currentActiveRow !== row) {
         return;
       }
-      
+
       const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
-      
-      // Find if this cell is selected
       const isSelected = clickedCell.classList.contains('selected');
-      
+
       if (isSelected) {
-        // Remove this cell and all cells after it
         let foundClickedCell = false;
-        
+
         rowCells.forEach(cell => {
           const cellCol = parseInt(cell.dataset.col);
           if (cellCol === col) {
@@ -246,101 +224,75 @@ mixin scriptBlock()
             delete selectedCells[cellCol];
           }
         });
-        
-        // If no cells are selected anymore, clear the active row
+
         if (Object.keys(selectedCells).length === 0) {
           currentActiveRow = null;
         }
       }
-      
+
       checkSubmitButton();
     }
-    
+
     function nextStep() {
       const labSelect = document.getElementById('lab_select');
-      
+
       if (labSelect.value) {
         const selectedLab = labSelect.value;
-        
         document.getElementById('selected-lab').textContent = selectedLab;
         document.getElementById('step1').classList.remove('active');
         document.getElementById('step2').classList.add('active');
-        
-        // Update date header when moving to step 2
         updateDateHeader();
-        
-        // Reset selected cells when moving to step 2
         clearAllSelections();
         checkSubmitButton();
       }
     }
-    
+
     function prevStep() {
       document.getElementById('step2').classList.remove('active');
       document.getElementById('step1').classList.add('active');
-      
-      // Clear selected cells when going back
       clearAllSelections();
     }
-    
+
     function submitForm() {
       const labSelect = document.getElementById('lab_select');
       const dateSelect = document.getElementById('date_select');
       const anonCheckbox = document.getElementById('anon_checkbox');
-      
-      // Validate before submission
+
       if (!dateSelect.value) {
         alert('Please select a date before submitting.');
         return;
       }
-      
+
       if (Object.keys(selectedCells).length === 0) {
         alert('Please select at least one time slot before submitting.');
         return;
       }
-      
-      // Time slots mapping (1-based index to time)
+
       const timeSlots = ['07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'];
-      
-      // Get selected time slot indices and sort them
+
       const selectedTimeSlots = Object.keys(selectedCells).map(key => parseInt(key)).sort((a, b) => a - b);
-      
-      // Create start and end times for the continuous selection
-      const startTimeIndex = selectedTimeSlots[0] - 1; // Convert to 0-based index
-      const endTimeIndex = selectedTimeSlots[selectedTimeSlots.length - 1] - 1; // Convert to 0-based index
-      
+      const startTimeIndex = selectedTimeSlots[0] - 1;
+      const endTimeIndex = selectedTimeSlots[selectedTimeSlots.length - 1] - 1;
+
       const startTime = timeSlots[startTimeIndex];
       const endTime = timeSlots[endTimeIndex];
-      
-      // Create start and end datetime objects
+
       const selectedDate = new Date(dateSelect.value);
       const startDateTime = new Date(selectedDate);
       const endDateTime = new Date(selectedDate);
-      
-      // Parse and set start time
+
       const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num));
       startDateTime.setHours(startHour, startMinute, 0, 0);
-      
-      // Parse and set end time (add 30 minutes to the end slot to get the actual end time)
+
       const [endHour, endMinute] = endTime.split(':').map(num => parseInt(num));
       endDateTime.setHours(endHour, endMinute + 30, 0, 0);
-      
-      // Get the first selected cell to get seat info
-      const firstSelectedCell = selectedCells[selectedTimeSlots[0]];
-      
-      // Create single reservation object following the schema
-      console.log('First Selected Cell:', firstSelectedCell);
-      console.log('Seat:', firstSelectedCell.seat);
-      console.log('Lab:', labSelect.value);
-      console.log('Start DateTime:', startDateTime);
-      console.log('End DateTime:', endDateTime);
-      console.log('Anonymous:', anonCheckbox.checked);
 
+      const firstSelectedCell = selectedCells[selectedTimeSlots[0]];
 
       const reservation = {
         seat: firstSelectedCell.seat,
         lab: labSelect.value,
-        reqDate: new Date(), // Current date/time for request
+        reqDate: new Date(),
         resDate: {
           start: startDateTime,
           end: endDateTime
@@ -348,13 +300,6 @@ mixin scriptBlock()
         anon: anonCheckbox.checked
       };
 
-      // Log the complete reservation object
-      console.log('Complete Reservation Object:', reservation);
-      // Log the stringified version that will be sent
-      console.log('Stringified Reservation:', JSON.stringify(reservation));
-
-
-      // Submit to server
       fetch('/', {
         method: 'POST',
         headers: {
@@ -363,18 +308,13 @@ mixin scriptBlock()
         body: JSON.stringify({
           reservation: reservation
         })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert('Reservation submitted successfully!');
-          // Reset form or redirect
-          location.reload();
-        } else {
-          alert('Error submitting reservation: ' + data.message);
-        }
-      })
-      .catch(error => {
+      }) .then(response => response.json()).then(data => {
+      if (data.success) {
+        window.location.href = '/confirmation';
+      } else {
+        alert('Error submitting reservation: ' + (data.error || 'Unknown error'));
+      }
+      }) .catch(error => {
         console.error('Error:', error);
         alert('Error submitting reservation. Please try again.');
       });

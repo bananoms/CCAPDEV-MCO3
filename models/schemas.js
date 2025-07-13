@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-const {Schema, model} = mongoose;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 const profileSchema = new Schema ({
     IDno: {type:Number},
@@ -16,19 +16,22 @@ const profileSchema = new Schema ({
 });
 
 const reservationsSchema = new Schema ({
-    groupID: {type:Number},
     seat: {type:String, required:true},
-    lab: {type:String, required:true, enum:['GK101A', 'GK304A', 'GK304B', 'AG702', 'AG1904', 'LS209', 'LS311']},
+    lab: {type:String, required:true},
     reqDate: {type:Date, required:true, default:Date.now},
-    resDate: {type:Date, required:true}, //Time frame of reservation
+    resDate: {
+        start: {type: Date, required: true},
+        end: {type: Date, required: true}
+    }, //Time frame of reservation
     anon: {type:Boolean, required:true},
     user: {type:Schema.Types.ObjectId, ref:'profile'},
     reservedStud: {type:Number}
 });
 
-const Profile = model("Profile", profileSchema);
-const Reservations = model("Reservations", reservationsSchema);
+const Profile = mongoose.model("Profile", profileSchema);
+const Reservations = mongoose.model("Reservations", reservationsSchema);
 
-const schemas = {'profile':Profile, 'reservations':Reservations};
-
-export default schemas;
+module.exports = {
+    profile: Profile,
+    reservations: Reservations
+};
