@@ -2,44 +2,44 @@ mixin step1()
   .step.active#step1.content-box.text-center.p-4
     h1 Reserve Laboratory Table
     p.mb-4
-        | Ready to book your lab seat? Just fill out the form with your needed building and room.
+        | Ready to book your lab seat? Just fill out the form with your needed laboratory.
         br
         | You'll get a confirmation as soon as your reservation is secured.
     .mb-4.d-flex.justify-content-center.gap-3.flex-wrap
-      label(for="building_select")
-      select#building_select.form-select.w-auto(name="building_select" onchange="checkNextButton()")
-        option(value="") 🏢 Building
-        option(value="A") A
-        option(value="B") B
-        option(value="C") C
-      label(for="room_select")
-      select#room_select.form-select.w-auto(name="room_select" onchange="checkNextButton()")
-        option(value="") 🏫 Room
-        option(value="GK101") GK101
-        option(value="GK102") GK102
-        option(value="GK103") GK103
-        option(value="GK104") GK104
-        option(value="GK105") GK105
+      label(for="lab_select")
+      select#lab_select.form-select.w-auto(name="lab" onchange="checkNextButton()")
+        option(value="") 🔬 Select Laboratory
+        option(value="GK101A") GK101A
+        option(value="GK304A") GK304A
+        option(value="GK304B") GK304B
+        option(value="AG702") AG702
+        option(value="AG1904") AG1904
+        option(value="LS209") LS209
+        option(value="LS311") LS311
+    .mb-3
+      label.checkbox-label
+        input#anon_checkbox(type="checkbox" name="anon")
+        |&nbsp; Make this reservation anonymous
     button#next-btn.main-btn.mt-3(onclick="nextStep()" disabled) Show Availability
 
 mixin step2(timeSlots)
   .step#step2.content-box.text-center.p-4
     h1 Reserve Laboratory Table
     .selection-info
-      strong Selected Location: 
-      span#selected-location
+      strong Selected Laboratory: 
+      span#selected-lab
     .date-header#date-header
       span#formatted-date
     .date-input-container
       label(for="date_select") 
-      input#date_select.form-control.w-auto(type="date" name="date_select" onchange="updateDateHeader(); checkSubmitButton();")
+      input#date_select.form-control.w-auto(type="date" name="resDate" onchange="updateDateHeader(); checkSubmitButton();")
     .d-flex.justify-content-center
       .step2-container
         .step2-content
           table.time-table#time-table
             thead 
               tr
-                th
+                th Seat
                 each timeSlot in timeSlots
                   th= timeSlot
             tbody#table-body
@@ -68,7 +68,7 @@ mixin scriptBlock()
       const months = ['January', 'February', 'March', 'April', 'May', 'June', 
                      'July', 'August', 'September', 'October', 'November', 'December'];
       
-      const dayOfWeek = days[date.getDay()];
+      const dayOfWeek = days[date.getDay()]; 
       const month = months[date.getMonth()];
       const day = date.getDate();
       const year = date.getFullYear();
@@ -91,13 +91,12 @@ mixin scriptBlock()
     }
     
     function checkNextButton() {
-      const buildingSelect = document.getElementById('building_select');
-      const roomSelect = document.getElementById('room_select');
+      const labSelect = document.getElementById('lab_select');
       const nextBtn = document.getElementById('next-btn');
       
-      // Enable next button only if building/room is selected
-      const hasLocation = buildingSelect.value && roomSelect.value;
-      nextBtn.disabled = !hasLocation;
+      // Enable next button only if lab is selected
+      const hasLab = labSelect.value;
+      nextBtn.disabled = !hasLab;
     }
     
     function checkSubmitButton() {
@@ -114,6 +113,7 @@ mixin scriptBlock()
       const tableBody = document.getElementById('table-body');
       tableBody.innerHTML = ''; // Clear existing rows
       
+      // Create seat rows (A1-A8 format for seats)
       for (let i = 1; i <= 8; i++) {
         const row = document.createElement('tr');
         const rowLabel = document.createElement('td');
@@ -124,6 +124,7 @@ mixin scriptBlock()
           const cell = document.createElement('td');
           cell.dataset.row = i;
           cell.dataset.col = j;
+          cell.dataset.seat = `A${i}`;
           cell.addEventListener('click', function() { selectCell(this); });
           cell.addEventListener("contextmenu", (event) => { 
             event.preventDefault(); 
@@ -138,6 +139,7 @@ mixin scriptBlock()
     function selectCell(clickedCell) {
       const row = parseInt(clickedCell.dataset.row);
       const col = parseInt(clickedCell.dataset.col);
+      const seat = clickedCell.dataset.seat;
       const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
       
       // Select current cell and adjacent cells
@@ -148,7 +150,10 @@ mixin scriptBlock()
         }
       });
       
-      selectedCells[row] = col;
+      selectedCells[row] = {
+        seat: seat,
+        timeSlot: col
+      };
       checkSubmitButton();
     }
     
@@ -169,20 +174,12 @@ mixin scriptBlock()
     }
     
     function nextStep() {
-      const buildingSelect = document.getElementById('building_select');
-      const roomSelect = document.getElementById('room_select');
+      const labSelect = document.getElementById('lab_select');
       
-      if (buildingSelect.value || roomSelect.value) {
-        let selectedLocation = '';
-        if (buildingSelect.value && roomSelect.value) {
-          selectedLocation = `Building: ${buildingSelect.value}, Room: ${roomSelect.value}`;
-        } else if (buildingSelect.value) {
-          selectedLocation = `Building: ${buildingSelect.value}`;
-        } else if (roomSelect.value) {
-          selectedLocation = `Room: ${roomSelect.value}`;
-        }
+      if (labSelect.value) {
+        const selectedLab = labSelect.value;
         
-        document.getElementById('selected-location').textContent = selectedLocation;
+        document.getElementById('selected-lab').textContent = selectedLab;
         document.getElementById('step1').classList.remove('active');
         document.getElementById('step2').classList.add('active');
         
@@ -208,9 +205,9 @@ mixin scriptBlock()
     }
     
     function submitForm() {
-      const buildingSelect = document.getElementById('building_select');
-      const roomSelect = document.getElementById('room_select');
+      const labSelect = document.getElementById('lab_select');
       const dateSelect = document.getElementById('date_select');
+      const anonCheckbox = document.getElementById('anon_checkbox');
       
       // Validate before submission
       if (!dateSelect.value) {
@@ -223,13 +220,37 @@ mixin scriptBlock()
         return;
       }
       
-      let bookingData = {
-        building: buildingSelect.value || null,
-        room: roomSelect.value || null,
-        date: dateSelect.value,
-        time_slots: selectedCells
-      };
+      // Create reservations for each selected cell
+      const reservations = Object.values(selectedCells).map(cellData => ({
+        seat: cellData.seat,
+        lab: labSelect.value,
+        resDate: new Date(dateSelect.value),
+        anon: anonCheckbox.checked,
+        timeSlot: cellData.timeSlot
+      }));
       
-      alert('Form submitted! Check console for booking data.');
-      console.log('Booking Data:', bookingData);
+      // Submit to server
+      fetch('/reservations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reservations: reservations
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Reservations submitted successfully!');
+          // Reset form or redirect
+          location.reload();
+        } else {
+          alert('Error submitting reservations: ' + data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error submitting reservations. Please try again.');
+      });
     }
