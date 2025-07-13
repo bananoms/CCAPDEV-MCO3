@@ -6,7 +6,7 @@ block content
       .form-panel
         h1 Welcome Back!
         p Please Login to your Laboratory Account
-        form(method="POST", action="/login")
+        form(method="POST", action="/")
           .form-group
             input.form-control(type="email", placeholder="Email Address", required)
           .form-group
@@ -16,4 +16,4 @@ block content
               button.btn.main-btn(type="submit") Login
               p.signup.mt-2
                 | Don't have an account?  
-                a(href="/signup")   Sign up
+                a(href="/sign-up")   Sign up
