@@ -284,6 +284,7 @@ mixin scriptBlock()
       const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num));
       startDateTime.setHours(startHour, startMinute, 0, 0);
 
+
       const [endHour, endMinute] = endTime.split(':').map(num => parseInt(num));
       endDateTime.setHours(endHour, endMinute + 30, 0, 0);
 
