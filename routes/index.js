@@ -6,7 +6,9 @@ var router = express.Router();
 const controller = require('../controllers/controller');
 
 
-router.get('/', controller.homePageGet);
+router.get('/', controller.reservePageGet);
+router.post('/', controller.reservePagePost)
+router.get('/confirmation', controller.confirmationPageGet);
 router.get('/about', controller.aboutPageGet);
 router.get('/log-in', controller.loginPageGet);
 router.post('/log-in', controller.loginPagePost);

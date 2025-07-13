@@ -1,5 +1,14 @@
-exports.homePageGet = (req,res) => {
+exports.reservePageGet = (req,res) => {
     res.render('index');
+}
+
+exports.reservePagePost = async (req,res,next) => {
+
+    res.redirect('/confirmation');
+}
+
+exports.confirmationPageGet = (req,res) => {
+    res.render('confirmation');
 }
 
 exports.aboutPageGet = (req,res) => {
