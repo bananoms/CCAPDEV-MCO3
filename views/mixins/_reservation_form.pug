@@ -53,17 +53,7 @@ mixin scriptBlock()
   script.
     let selectedCells = [];
     let currentActiveRow = null;
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const today = new Date();
-      const formattedDate = today.toISOString().split('T')[0];
-      document.getElementById('date_select').value = formattedDate;
-      document.getElementById('date_select').min = formattedDate;
-      createTableRows();
-      checkNextButton();
-      updateDateHeader();
-    });
-
+    
     function formatDate(dateString) {
       const date = new Date(dateString);
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -139,7 +129,7 @@ mixin scriptBlock()
       currentActiveRow = null;
     }
 
-    function selectCell(clickedCell) {
+      function selectCell(clickedCell) {
       const row = parseInt(clickedCell.dataset.row);
       const col = parseInt(clickedCell.dataset.col);
       const seat = clickedCell.dataset.seat;
@@ -149,8 +139,13 @@ mixin scriptBlock()
       }
 
       currentActiveRow = row;
-
       const isAlreadySelected = clickedCell.classList.contains('selected');
+      const isReserved = clickedCell.classList.contains('reserved');
+
+      // If clicking on a reserved cell, don't allow selection
+      if (isReserved) {
+        return;
+      }
 
       if (isAlreadySelected) {
         const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
@@ -179,12 +174,31 @@ mixin scriptBlock()
           const minCol = Math.min(...currentSelectedCols, col);
           const maxCol = Math.max(...currentSelectedCols, col);
 
+          // Check if there are any reserved cells in the range
+          let hasReservedInRange = false;
+          for (let i = minCol; i <= maxCol; i++) {
+            const cellToCheck = document.querySelector(`td[data-row="${row}"][data-col="${i}"]`);
+            if (cellToCheck && cellToCheck.classList.contains('reserved')) {
+              hasReservedInRange = true;
+              break;
+            }
+          }
+
+          // If there are reserved cells in the range, don't allow selection
+          if (hasReservedInRange) {
+            // Optionally, you can show an alert or visual feedback
+            console.log('Cannot select range: reserved cells detected in the range');
+            return;
+          }
+
+          // Clear current selections and select the new range
           const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
           rowCells.forEach(cell => {
             cell.classList.remove('selected');
           });
           selectedCells = {};
 
+          // Select the new range
           for (let i = minCol; i <= maxCol; i++) {
             const cellToSelect = document.querySelector(`td[data-row="${row}"][data-col="${i}"]`);
             if (cellToSelect) {
@@ -210,7 +224,6 @@ mixin scriptBlock()
 
       const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
       const isSelected = clickedCell.classList.contains('selected');
-
       if (isSelected) {
         let foundClickedCell = false;
 
@@ -252,7 +265,7 @@ mixin scriptBlock()
       document.getElementById('step1').classList.add('active');
       clearAllSelections();
     }
-
+    
     function submitForm() {
       const labSelect = document.getElementById('lab_select');
       const dateSelect = document.getElementById('date_select');
@@ -267,7 +280,38 @@ mixin scriptBlock()
         alert('Please select at least one time slot before submitting.');
         return;
       }
+      function timeToSlotIndex(timeString) {
+        const date = new Date(timeString);
+        
+        // Get local time components
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        
+        console.log(`Converting time: ${timeString} -> ${hours}:${minutes.toString().padStart(2, '0')}`);
+        
+        // 7:00 AM = slot 1, 7:30 AM = slot 2, etc.
+        const baseHour = 7;
+        
+        // Calculate slot index: each hour has 2 slots (30-minute intervals)
+        let slotIndex = ((hours - baseHour) * 2) + 1;
+        
+        // Add 1 more if minutes >= 30 (for the second half-hour slot)
+        if (minutes >= 30) {
+          slotIndex += 1;
+        }
+        console.log(`Calculated slot index: ${slotIndex}`);
+    
+          // Ensure slot index is within valid range (1-29)
+          return Math.max(1, Math.min(29, slotIndex));
+      }
+      
+      function getSeatRowNumber(seatString) {
+        // Extract row number from seat string (e.g., "A3" -> 3)
+        const match = seatString.match(/[A-Z](\d+)/);
+        return match ? parseInt(match[1]) : 1;
+      }
 
+      
       const timeSlots = ['07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'];
 
       const selectedTimeSlots = Object.keys(selectedCells).map(key => parseInt(key)).sort((a, b) => a - b);
@@ -318,4 +362,172 @@ mixin scriptBlock()
         console.error('Error:', error);
         alert('Error submitting reservation. Please try again.');
       });
+    }
+    // Fixed fetchReservations function - should be async if fetching from server
+    async function fetchReservations(lab, resDateStart) {
+      try {
+        // Create URL with query parameters
+        const url = new URL('/api/reservations', window.location.origin);
+        if (lab) url.searchParams.append('lab', lab);
+        if (resDateStart) url.searchParams.append('resDateStart', resDateStart);
+        
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.reservations || data || [];
+        
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+      }
+    };
+
+    // Fixed timeToSlotIndex function - handles UTC conversion properly
+    function timeToSlotIndex(timeString) {
+      const date = new Date(timeString);
+      
+      // Get local time components
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      
+      console.log(`Converting time: ${timeString} -> ${hours}:${minutes.toString().padStart(2, '0')}`);
+      
+      // 7:00 AM = slot 1, 7:30 AM = slot 2, etc.
+      const baseHour = 7;
+      
+      // Calculate slot index: each hour has 2 slots (30-minute intervals)
+      let slotIndex = ((hours - baseHour) * 2) + 1;
+      
+      // Add 1 more if minutes >= 30 (for the second half-hour slot)
+      if (minutes >= 30) {
+        slotIndex += 1;
+      }
+      
+      console.log(`Calculated slot index: ${slotIndex}`);
+      
+      // Ensure slot index is within valid range (1-29)
+      return Math.max(1, Math.min(29, slotIndex));
+    }
+
+    // Fixed getSeatRowNumber function
+    function getSeatRowNumber(seatString) {
+      // Extract row number from seat string (e.g., "A3" -> 3)
+      const match = seatString.match(/[A-Z](\d+)/);
+      return match ? parseInt(match[1]) : 1;
+    }
+
+    // Fixed markReservations function - now async and filters by current date/lab
+    async function markReservations() {
+      try {
+        
+        //const currentDate = document.getElementById('date_select').value;
+        const currentLab = document.getElementById('lab_select').value;
+
+        const currentDate = "2025-07-12T23:00:00.000+00:00";
+        
+        const reservations = await fetchReservations(currentLab, currentDate);
+        
+        if (!currentDate || !currentLab) {
+          console.log('Date or lab not selected, skipping reservation marking');
+          return;
+        }
+        
+        // Clear all previous reservations - fix the selector
+        const allCells = document.querySelectorAll('td[data-row]');
+        if (allCells && allCells.length > 0) {
+          allCells.forEach(cell => {
+            cell.classList.remove('reserved');
+          });
+        }
+        
+        // Ensure reservations is an array
+        if (!Array.isArray(reservations)) {
+          console.error('Reservations is not an array:', reservations);
+          return;
+        }
+        
+        reservations.forEach(reservation => {
+          const seatRowNumber = getSeatRowNumber(reservation.seat);
+          const startSlot = timeToSlotIndex(reservation.resDate.start);
+          const endSlot = timeToSlotIndex(reservation.resDate.end);
+          
+          console.log(`Reservation for ${reservation.seat}:`, {
+            seat: reservation.seat,
+            rowNumber: seatRowNumber,
+            startTime: reservation.resDate.start,
+            endTime: reservation.resDate.end,
+            startSlot: startSlot,
+            endSlot: endSlot
+          });
+          
+          // Mark all slots from start to end as reserved
+          for (let slot = startSlot; slot <= endSlot; slot++) {
+            const cell = document.querySelector(`td[data-row="${seatRowNumber}"][data-col="${slot}"]`);
+            if (cell) {
+              cell.classList.add('reserved');
+              console.log(`Marked cell as reserved: row ${seatRowNumber}, col ${slot}`);
+            } else {
+              console.warn(`Cell not found: row ${seatRowNumber}, col ${slot}`);
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error marking reservations:', error);
+      }
+    }
+
+    // Updated DOMContentLoaded event listener
+    document.addEventListener('DOMContentLoaded', async function() {
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0];
+      document.getElementById('date_select').value = formattedDate;
+      document.getElementById('date_select').min = formattedDate;
+      createTableRows();
+      checkNextButton();
+      updateDateHeader();
+      
+      // Mark reservations after table is created
+      await markReservations();
+    });
+
+    // Add event listeners to refresh reservations when date or lab changes
+    function setupReservationRefresh() {
+      const dateSelect = document.getElementById('date_select');
+      const labSelect = document.getElementById('lab_select');
+      
+      dateSelect.addEventListener('change', async function() {
+        updateDateHeader();
+        await markReservations();
+      });
+      
+      labSelect.addEventListener('change', async function() {
+        await markReservations();
+      });
+    }
+
+    // Call this in your nextStep function to set up event listeners
+    function nextStep() {
+      const labSelect = document.getElementById('lab_select');
+
+      if (labSelect.value) {
+        const selectedLab = labSelect.value;
+        document.getElementById('selected-lab').textContent = selectedLab;
+        document.getElementById('step1').classList.remove('active');
+        document.getElementById('step2').classList.add('active');
+        updateDateHeader();
+        clearAllSelections();
+        checkSubmitButton();
+        
+        // Set up reservation refresh and mark initial reservations
+        setupReservationRefresh();
+        markReservations();
+      }
     }
