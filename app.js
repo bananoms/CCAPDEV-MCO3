@@ -9,7 +9,11 @@ const mongoose = require('mongoose');
 
 var indexRouter = require('./routes/index');
 
-var app = express();
+const app = express();
+
+// Add these middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

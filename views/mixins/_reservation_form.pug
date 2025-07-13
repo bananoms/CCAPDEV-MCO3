@@ -2,12 +2,12 @@ mixin step1()
   .step.active#step1.content-box.text-center.p-4
     h1 Reserve Laboratory Table
     p.mb-4
-        | Ready to book your lab seat? Just fill out the form with your needed laboratory.
-        br
-        | You'll get a confirmation as soon as your reservation is secured.
+      | Ready to book your lab seat? Just fill out the form with your needed laboratory.
+      br
+      | You'll get a confirmation as soon as your reservation is secured.
     .mb-4.d-flex.justify-content-center.gap-3.flex-wrap
       label(for="lab_select")
-      select#lab_select.form-select.w-auto(name="lab" onchange="checkNextButton()")
+      select#lab_select.form-select.w-auto(name="lab" required onchange="checkNextButton()")
         option(value="") 🔬 Select Laboratory
         option(value="GK101A") GK101A
         option(value="GK304A") GK304A
@@ -20,32 +20,33 @@ mixin step1()
       label.checkbox-label
         input#anon_checkbox(type="checkbox" name="anon")
         |&nbsp; Make this reservation anonymous
-    button#next-btn.main-btn.mt-3(onclick="nextStep()" disabled) Show Availability
+    button#next-btn.main-btn.mt-3(type="button" onclick="nextStep()" disabled) Show Availability
 
 mixin step2(timeSlots)
-  .step#step2.content-box.text-center.p-4
-    h1 Reserve Laboratory Table
-    .selection-info
-      strong Selected Laboratory: 
-      span#selected-lab
-    .date-header#date-header
-      span#formatted-date
-    .date-input-container
-      label(for="date_select") 
-      input#date_select.form-control.w-auto(type="date" name="resDate" onchange="updateDateHeader(); checkSubmitButton();")
-    .d-flex.justify-content-center
-      .step2-container
-        .step2-content
-          table.time-table#time-table
-            thead 
-              tr
-                th Seat
-                each timeSlot in timeSlots
-                  th= timeSlot
-            tbody#table-body
-    .mt-3
-      button.btn.btn-back(onclick="prevStep()") Back
-      button#submit-btn.btn(onclick="submitForm()" disabled) Submit
+  form#reservationForm.needs-validation(action="/" method="POST" onsubmit="return submitForm(event)" novalidate)
+    .step#step2.content-box.text-center.p-4
+      h1 Reserve Laboratory Table
+      .selection-info
+        strong Selected Laboratory:
+        span#selected-lab
+      .date-header#date-header
+        span#formatted-date
+      .date-input-container
+        label(for="date_select")
+        input#date_select.form-control.w-auto(type="date" name="resDate" required onchange="updateDateHeader(); checkSubmitButton();")
+      .d-flex.justify-content-center
+        .step2-container
+          .step2-content
+            table.time-table#time-table
+              thead
+                tr
+                  th Seat
+                  each timeSlot in timeSlots
+                    th= timeSlot
+              tbody#table-body
+      .mt-3
+        button.btn.btn-back(type="button" onclick="prevStep()") Back
+        button#submit-btn.btn(type="submit") Submit
 
 mixin scriptBlock()
   script.
@@ -214,7 +215,6 @@ mixin scriptBlock()
           }
         }
       }
-      
       checkSubmitButton();
     }
     
@@ -329,6 +329,14 @@ mixin scriptBlock()
       const firstSelectedCell = selectedCells[selectedTimeSlots[0]];
       
       // Create single reservation object following the schema
+      console.log('First Selected Cell:', firstSelectedCell);
+      console.log('Seat:', firstSelectedCell.seat);
+      console.log('Lab:', labSelect.value);
+      console.log('Start DateTime:', startDateTime);
+      console.log('End DateTime:', endDateTime);
+      console.log('Anonymous:', anonCheckbox.checked);
+
+
       const reservation = {
         seat: firstSelectedCell.seat,
         lab: labSelect.value,
@@ -339,9 +347,15 @@ mixin scriptBlock()
         },
         anon: anonCheckbox.checked
       };
-      
+
+      // Log the complete reservation object
+      console.log('Complete Reservation Object:', reservation);
+      // Log the stringified version that will be sent
+      console.log('Stringified Reservation:', JSON.stringify(reservation));
+
+
       // Submit to server
-      fetch('/reservations', {
+      fetch('/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
