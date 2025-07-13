@@ -1,0 +1,47 @@
+extends layout.pug
+
+block content
+.container-profile.container-fluid
+    //- Profile Section
+    main.main-profile
+      .profile-box
+        .main-profile-flex
+          //- Left Side (Main Profile)
+          .left-profile
+            img.profile-pic(
+              src=config.profilePic
+              alt="profile picture"
+            )
+            h1= config.username
+            h3= config.role
+            .profile-details
+              div
+                h4= config.pronouns
+                p= config.quote
+              div
+                h4 Biography
+                p= config.biography
+            .social-links
+              a(href=config.socialLinks.instagram)
+                img(src="https://img.icons8.com/ios-filled/24/000000/instagram-new.png")
+              a(href=config.socialLinks.facebook)
+                img(src="https://img.icons8.com/ios-filled/24/000000/facebook-new.png")
+              a(href=config.socialLinks.twitter)
+                img(src="https://img.icons8.com/ios-filled/24/000000/twitter.png")
+              a(href=config.socialLinks.linkedin)
+                img(src="https://img.icons8.com/ios-filled/24/000000/linkedin.png")
+          
+          //- Right Side (Buttons)
+          .right-buttons
+            button.btn.profile-btn Change Picture
+            button.btn.profile-btn Edit Profile
+            button.btn.profile-btn Delete Profile
+    
+    //- Reservation Sidebar
+    aside.sidebar
+      .notif-box
+        h2 Reservations
+        a.order-by(href="#") Order By ⇅
+        .reservation-list
+          each reservation in config.reservations
+            button.btn.notif-btn= reservation
