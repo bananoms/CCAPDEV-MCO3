@@ -118,3 +118,40 @@ exports.signupPagePost = async (req, res, next) => {
         });
     }
 };
+
+exports.getReservations = async (req, res) => {
+  try {
+    const { lab, resDateStart } = req.query;
+    let query = {};
+
+    if (lab) query.lab = lab;
+
+    if (resDateStart) {
+      const date = new Date(resDateStart);
+      const nextDate = new Date(date);
+      nextDate.setUTCDate(date.getUTCDate() + 1);
+
+      query['resDate.start'] = {
+        $gte: date,
+        $lt: nextDate
+      };
+    }
+
+    const reservations = await Reservations.find(query).lean();
+
+    res.json({
+      success: true,
+      reservations
+    });
+
+  } catch (error) {
+    console.error('Error fetching reservations:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch reservations'
+    });
+  }
+};
+
+
+
