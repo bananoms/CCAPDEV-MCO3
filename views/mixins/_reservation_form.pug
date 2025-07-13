@@ -428,10 +428,11 @@ mixin scriptBlock()
     async function markReservations() {
       try {
         
-        //const currentDate = document.getElementById('date_select').value;
+        const dateInput = document.getElementById('date_select').value;
+        const currentDate = new Date(dateInput);
+        currentDate.setDate(currentDate.getDate() - 1);
+        currentDate.toISOString();
         const currentLab = document.getElementById('lab_select').value;
-
-        const currentDate = "2025-07-12T23:00:00.000+00:00";
         
         const reservations = await fetchReservations(currentLab, currentDate);
         
