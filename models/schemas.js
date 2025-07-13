@@ -2,14 +2,13 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const profileSchema = new Schema ({
-    IDno: {type:Number},
     firstName: {type:String, required:true},
     lastName: {type:String, required:true},
-    img: {type:String, required:true},
+    img: {type:String},
     type: {type:String, required:true, enum:['Student', 'Lab Technician']},
     bio: {type:String},
     email: {type:String, required:true},
-    salt: { type: String, required: true },
+    salt: { type: String},
     hashedPassword: { type: String, required: true },
     rem: {type:Boolean, required:true},
     lastLogin: {type:Date, default:Date.now}

@@ -1,34 +1,55 @@
 extends layout.pug
 
 block content
-    .login-container
-      .image-panel
-      .form-panel
-        h1 Welcome!
-        p Create your new laboratory account to access our facilities
-        form(method="POST", action="/signup")
-          .form-group
-            input.name-input.form-control(type="text", placeholder="First Name", required)
-          .form-group
-            input.name-input.form-control(type="text", placeholder="Last Name", required)
-          .form-group
-            input.form-control(type="email", placeholder="Email Address", required)
-          .form-group
-            input.form-control(type="password", placeholder="Password", required)
-          .form-group
-            input.form-control(type="password", placeholder="Confirm Password", required)
+  - const errorMessage = error || ''
+  .login-container
+    .image-panel
+    .form-panel
+      h1 Welcome!
+      p Create your new laboratory account to access our facilities
+      if errorMessage
+        .alert.alert-danger= errorMessage
+      form(method="POST", action="/sign-up" onsubmit="return validateForm()")
+        .form-group
+          input.name-input.form-control(type="text", name="firstName", placeholder="First Name", required)
+        .form-group
+          input.name-input.form-control(type="text", name="lastName", placeholder="Last Name", required)
+        .form-group
+          input.form-control(
+            type="email",
+            name="email",
+            placeholder="Email Address",
+            pattern=".*@dlsu\\.edu\\.ph$"
+            title="Please use your DLSU email (@dlsu.edu.ph)"
+            required
+          )
+        .form-group
+          input.form-control#password(type="password", name="password", placeholder="Password", required)
+        .form-group
+          input.form-control#confirmPassword(type="password", name="confirmPassword", placeholder="Confirm Password", required)
 
-          .form-check
-            input.form-check-input(type="radio", name="role", id="facilitator", value="Lab Facilitator", required)
-            label.form-check-label(for="facilitator") Lab Facilitator
-          .form-check
-            input.form-check-input(type="radio", name="role", id="student", value="Student")
-            label.form-check-label(for="student") Student
+        .form-check
+          input.form-check-input(type="radio", name="type", id="facilitator", value="Lab Technician", required)
+          label.form-check-label(for="facilitator") Lab Facilitator
+        .form-check
+          input.form-check-input(type="radio", name="type", id="student", value="Student")
+          label.form-check-label(for="student") Student
 
-          .submit-fields.mt-3
-            .buttn
-              button.btn.main-btn(type="submit") Sign Up
-            p.signup.mt-2
-              | Already have an account?  
-              a(href="/login")    Login
+        .submit-fields.mt-3
+          .buttn
+            button.btn.main-btn(type="submit") Sign Up
+          p.signup.mt-2
+            | Already have an account?
+            a(href="/login")    Login
 
+  script.
+    function validateForm() {
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return false;
+      }
+      return true;
+    }

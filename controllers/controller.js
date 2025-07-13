@@ -1,5 +1,6 @@
 const schemas = require('../models/schemas');
 const Reservations = schemas.reservations;
+const Profile = schemas.profile;
 
 exports.reservePageGet = (req,res) => {
     res.render('index');
@@ -15,7 +16,6 @@ exports.reservePagePost = async (req, res) => {
 
         const { seat, lab, reqDate, resDate, anon } = req.body.reservation;
 
-        // Validate each required field individually for better error messages
         if (!seat) throw new Error('Seat is required');
         if (!lab) throw new Error('Lab is required');
         if (!resDate || !resDate.start || !resDate.end) throw new Error('Valid reservation dates are required');
@@ -69,6 +69,52 @@ exports.signupPageGet = (req,res) => {
     res.render('sign_up');
 }
 
-exports.signupPagePost = async (req,res,next) => {
+exports.signupPagePost = async (req, res, next) => {
+    try {
+        const { firstName, lastName, email, password, confirmPassword, type } = req.body;
 
-}
+        // Check if email is from dlsu.edu.ph domain
+        if (!email.endsWith('@dlsu.edu.ph')) {
+            return res.render('sign_up', {
+                error: 'Please use your DLSU email address (@dlsu.edu.ph)'
+            });
+        }
+
+        // Basic validation
+        if (password !== confirmPassword) {
+            return res.render('sign_up', {
+                error: 'Passwords do not match'
+            });
+        }
+
+        // Check if user already exists
+        const existingUser = await Profile.findOne({ email });
+        if (existingUser) {
+            return res.render('sign_up', {
+                error: 'Email already registered'
+            });
+        }
+
+        // Create new user profile
+        const newProfile = new Profile({
+            firstName,
+            lastName,
+            email,
+            type,
+            hashedPassword: password,
+            salt: 'dummy-salt',
+            rem: false,
+            img: '',
+            bio: ''
+        });
+
+        await newProfile.save();
+
+        res.redirect('/');
+    } catch (error) {
+        console.error('Signup error:', error);
+        res.render('sign_up', {
+            error: 'Error creating account. Please try again.'
+        });
+    }
+};
