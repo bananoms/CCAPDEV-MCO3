@@ -24,7 +24,11 @@
         p {
             margin-bottom: 25px;
         }
-
+        .btn
+        {
+            background-color: #11414E;
+            color: #FAD465;
+        }
         .main-btn {
             background-color: #11414E;
             color: #FAD465;
@@ -354,6 +358,7 @@
       cursor: default;
     }
     .time-table td:hover { background-color: #e9ecef; }
+    .time-table td.reserved { background-color: #bd8e90 !important; color: white; }
     .time-table td.selected { background-color: #8EBD9D !important; color: white; }
     .time-table td:first-child { font-weight: bold; background-color: #FFF5D0; cursor: default; }
     .time-table td:first-child:hover { background-color: #FFF5D0; }
@@ -430,3 +435,43 @@
     .step2-container::-webkit-scrollbar-thumb:hover {
       background: #3f7e8f;
     }
+    .confirmation
+    {   
+        text-align: left;
+    }
+    .reservation-details
+    {
+        margin-top: 20px;
+    }
+    .reservation-details p
+    {
+        margin-bottom: 10px;
+    }
+    .card-body, .alert.alert-info
+    {
+        background-color: #FAEECF;
+    }
+    .alert.alert-info
+    {
+        border: 0px;
+    }
+    .card-header, .card-footer
+    {
+        background-color: #eee4c8;
+        color: #11414E;
+    }
+    .card-footer .btn
+    {
+        border-radius: 5px;
+        margin-right: 5px;
+    }
+    .newReserve
+    {
+        margin-bottom: 30px;
+    }
+    .newReserve .btn
+    {
+        background-color: #FAEECF;
+        color: #11414E;
+    }
+
