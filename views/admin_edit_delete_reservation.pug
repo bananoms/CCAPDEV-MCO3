@@ -1,69 +1,445 @@
-extends layout.pug
-block content
-    .container
-        h1 Manage Reservations
-        if reservations && reservations.length > 0
-            .row
-                each reservation in reservations
-                    .col-md-4.mb-4
-                        .card
-                            .card-header
-                                h5.card-title #{reservation.lab} - Seat #{reservation.seat}
-                                small Booking ID: #{reservation._id}
-                            .card-body
-                                .reservation-details
-                                    p
-                                        strong Request Date: 
-                                        span #{reservation.reqDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                    p
-                                        strong Reservation Date: 
-                                        span #{reservation.resDate.start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                    p
-                                        strong Time: 
-                                        span #{reservation.resDate.start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - #{reservation.resDate.end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                                    p
-                                        strong User: 
-                                        span #{reservation.anon ? 'anon' : (reservation.user ? reservation.user.username : 'Guest')}
-                                    if reservation.reservedStud
-                                        p
-                                            strong Students: 
-                                            span #{reservation.reservedStud}
-                            .card-footer
-                                .btn-group(role="group")
-                                    button.btn.btn-sm(onclick=`editReservation('${reservation._id}')`) Edit
-                                    button.btn.btn-sm(onclick=`deleteReservation('${reservation._id}')`) Delete
-        else
-            .alert.alert-info
-                h4 No Reservations Found
-                p There are currently no reservations in the system.
+mixin step2(timeSlots, reservation)
+  .reservation-container#reservationForm
+    .step.active#step2.content-box.text-center.p-4
+      h1 Edit Laboratory Reservation
+      .selection-info
+        strong Selected Laboratory:
+        span#selected-lab= reservation.lab
+      .selection-info.mt-2
+        strong Reservation ID:
+        span#editable-id= reservation._id
+      .selection-info.mt-2
+        strong Start Time:
+        span#editable-period= reservation.resDate.start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      .selection-info.mt-2
+        strong End Time:
+        span#editable-period= reservation.resDate.end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+
+      .date-header#date-header
+        span#formatted-date
+      .date-input-container
+        label(for="date_select")
+        input#date_select.form-control.w-auto(type="date" name="resDate" required onchange="updateDateHeader(); checkSubmitButton();")
+      .d-flex.justify-content-center
+        .step2-container
+          .step2-content
+            table.time-table#time-table
+              thead
+                tr
+                  th Seat
+                  each timeSlot in timeSlots
+                    th= timeSlot
+              tbody#table-body
+      .mt-3
+        button.btn.me-2(type="button" onclick="deleteReservation()") Delete Reservation
+        button#submit-btn.btn(type="button" onclick="submitForm()") Update Reservation
+
+mixin scriptBlock(reservation)
+  script.
+    // Initialize with reservation data
+    const reservationData = !{JSON.stringify(reservation)};
+    let selectedCells = [];
+    let currentActiveRow = null;
+    let originalReservation = reservationData;
+    
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+
+      const dayOfWeek = days[date.getDay()];
+      const month = months[date.getMonth()];
+      const day = date.getDate();
+      const year = date.getFullYear();
+
+      return `${dayOfWeek}, ${month} ${day}, ${year}`;
+    }
+
+    function updateDateHeader() {
+      const dateSelect = document.getElementById('date_select');
+      const dateHeader = document.getElementById('date-header');
+      const formattedDateSpan = document.getElementById('formatted-date');
+
+      if (dateSelect.value) {
+        const formattedDate = formatDate(dateSelect.value);
+        formattedDateSpan.textContent = formattedDate;
+        dateHeader.classList.add('visible');
+        markReservations();
+      } else {
+        dateHeader.classList.remove('visible');
+      }
+    }
+
+    function checkSubmitButton() {
+      const submitBtn = document.getElementById('submit-btn');
+      const dateSelect = document.getElementById('date_select');
+      submitBtn.disabled = !(dateSelect.value && Object.keys(selectedCells).length > 0);
+    }
+
+    function createTableRows() {
+      const tableBody = document.getElementById('table-body');
+      tableBody.innerHTML = '';
+
+      for (let i = 1; i <= 8; i++) {
+        const row = document.createElement('tr');
+        const rowLabel = document.createElement('td');
+        rowLabel.textContent = `A${i}`;
+        row.appendChild(rowLabel);
+
+        for (let j = 1; j <= 29; j++) {
+          const cell = document.createElement('td');
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          cell.dataset.seat = `A${i}`;
+          cell.addEventListener('click', function() { selectCell(this); });
+          cell.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            deselectCell(event.currentTarget);
+          });
+          row.appendChild(cell);
+        }
+        tableBody.appendChild(row);
+      }
+    }
+
+    function clearAllSelections() {
+      const allSelectedCells = document.querySelectorAll('.selected');
+      allSelectedCells.forEach(cell => {
+        cell.classList.remove('selected');
+      });
+      selectedCells = [];
+      currentActiveRow = null;
+    }
+
+    function selectCell(clickedCell) {
+      const row = parseInt(clickedCell.dataset.row);
+      const col = parseInt(clickedCell.dataset.col);
+      const seat = clickedCell.dataset.seat;
+
+      if (currentActiveRow !== null && currentActiveRow !== row) {
+        clearAllSelections();
+      }
+
+      currentActiveRow = row;
+      const isAlreadySelected = clickedCell.classList.contains('selected');
+      const isReserved = clickedCell.classList.contains('reserved');
+
+      if (isAlreadySelected) {
+        const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
+        let foundClickedCell = false;
+
+        rowCells.forEach(cell => {
+          const cellCol = parseInt(cell.dataset.col);
+          if (cellCol === col) {
+            foundClickedCell = true;
+          }
+          if (foundClickedCell) {
+            cell.classList.remove('selected');
+            delete selectedCells[cellCol];
+          }
+        });
+      } else {
+        const currentSelectedCols = Object.keys(selectedCells).map(key => parseInt(key)).sort((a, b) => a - b);
+
+        if (currentSelectedCols.length === 0) {
+          clickedCell.classList.add('selected');
+          selectedCells[col] = {
+            seat: seat,
+            timeSlot: col
+          };
+        } else {
+          const minCol = Math.min(...currentSelectedCols, col);
+          const maxCol = Math.max(...currentSelectedCols, col);
+
+          // Check if there are any non-editable reserved cells in the range
+          let hasNonEditableReservedInRange = false;
+          for (let i = minCol; i <= maxCol; i++) {
+            const cellToCheck = document.querySelector(`td[data-row="${row}"][data-col="${i}"]`);
+            if (cellToCheck && cellToCheck.classList.contains('reserved') && !cellToCheck.classList.contains('editable')) {
+              hasNonEditableReservedInRange = true;
+              break;
+            }
+          }
+
+          if (hasNonEditableReservedInRange) {
+            console.log('Cannot select range: non-editable reserved cells detected in the range');
+            return;
+          }
+
+          // Clear current selections and select the new range
+          const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
+          rowCells.forEach(cell => {
+            cell.classList.remove('selected');
+          });
+          selectedCells = {};
+
+          // Select the new range
+          for (let i = minCol; i <= maxCol; i++) {
+            const cellToSelect = document.querySelector(`td[data-row="${row}"][data-col="${i}"]`);
+            if (cellToSelect) {
+              cellToSelect.classList.add('selected');
+              selectedCells[i] = {
+                seat: seat,
+                timeSlot: i
+              };
+            }
+          }
+        }
+      }
+      checkSubmitButton();
+    }
+
+    function deselectCell(clickedCell) {
+      const row = parseInt(clickedCell.dataset.row);
+      const col = parseInt(clickedCell.dataset.col);
+
+      if (currentActiveRow !== row) {
+        return;
+      }
+
+      const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
+      const isSelected = clickedCell.classList.contains('selected');
+      if (isSelected) {
+        let foundClickedCell = false;
+
+        rowCells.forEach(cell => {
+          const cellCol = parseInt(cell.dataset.col);
+          if (cellCol === col) {
+            foundClickedCell = true;
+          }
+          if (foundClickedCell) {
+            cell.classList.remove('selected');
+            delete selectedCells[cellCol];
+          }
+        });
+
+        if (Object.keys(selectedCells).length === 0) {
+          currentActiveRow = null;
+        }
+      }
+
+      checkSubmitButton();
+    }
+
+    function submitForm() {
+      const dateSelect = document.getElementById('date_select');
+      const selectedLab = document.getElementById('selected-lab').textContent;
+
+      if (!dateSelect.value) {
+        console.log('Please select a date before submitting.');
+        return;
+      }
+
+      if (Object.keys(selectedCells).length === 0) {
+        console.log('Please select at least one time slot before submitting.');
+        return;
+      }
+
+      const timeSlots = ['07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'];
+
+      const selectedTimeSlots = Object.keys(selectedCells).map(key => parseInt(key)).sort((a, b) => a - b);
+      const startTimeIndex = selectedTimeSlots[0] - 1;
+      const endTimeIndex = selectedTimeSlots[selectedTimeSlots.length - 1] - 1;
+
+      const startTime = timeSlots[startTimeIndex];
+      const endTime = timeSlots[endTimeIndex];
+
+      const selectedDate = new Date(dateSelect.value);
+      const startDateTime = new Date(selectedDate);
+      const endDateTime = new Date(selectedDate);
+
+      const [startHour, startMinute] = startTime.split(':').map(num => parseInt(num));
+      startDateTime.setHours(startHour, startMinute, 0, 0);
+
+      const [endHour, endMinute] = endTime.split(':').map(num => parseInt(num));
+      endDateTime.setHours(endHour, endMinute + 30, 0, 0);
+
+      const firstSelectedCell = selectedCells[selectedTimeSlots[0]];
+
+      const updatedReservation = {
+        id: reservationData._id,
+        seat: firstSelectedCell.seat,
+        lab: selectedLab,
+        resDate: {
+          start: startDateTime,
+          end: endDateTime
+        },
+        anon: originalReservation.anon // Preserve original anon setting
+      };
+
+      fetch(`/admin/edit/${reservationData._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reservation: updatedReservation
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('Reservation updated successfully!');
+          window.location.href = `/confirmation/${reservationData._id}`;
+        } else {
+          console.log('Error updating reservation: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        console.log('Error updating reservation. Please try again.');
+      });
+    }
+
+    function deleteReservation() {
+      fetch(`/admin/delete/${reservationData._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('Reservation deleted successfully!');
+          window.location.href = '/';
+        } else {
+          console.log('Error deleting reservation: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        console.log('Error deleting reservation. Please try again.');
+      });
+    }
+
+    async function fetchReservations(lab, resDateStart) {
+      try {
+        const url = new URL('/api/reservations', window.location.origin);
+        if (lab) url.searchParams.append('lab', lab);
+        if (resDateStart) url.searchParams.append('resDateStart', resDateStart);
         
-        .mt-4.newReserve
-            a.btn(href="/admin/add") Add New Reservation
-            
-        script.
-            function editReservation(id) {
-                // Redirect to edit page or show modal
-                window.location.href = `/admin/edit/${id}`;
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.reservations || data || [];
+        
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+        return [];
+      }
+    }
+
+    function timeToSlotIndex(timeString) {
+      const date = new Date(timeString);
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      
+      const baseHour = 7;
+      let slotIndex = ((hours - baseHour) * 2) + 1;
+      
+      if (minutes >= 30) {
+        slotIndex += 1;
+      }
+      
+      return Math.max(1, Math.min(29, slotIndex));
+    }
+
+    function getSeatRowNumber(seatString) {
+      const match = seatString.match(/[A-Z](\d+)/);
+      return match ? parseInt(match[1]) : 1;
+    }
+
+    async function markReservations() {
+      try {
+        const dateInput = document.getElementById('date_select').value;
+        const currentDate = new Date(dateInput);
+        currentDate.setDate(currentDate.getDate() - 1);
+        const currentLab = document.getElementById('selected-lab').textContent;
+        
+        const reservations = await fetchReservations(currentLab, currentDate);
+        
+        if (!dateInput || !currentLab) {
+          console.log('Date or lab not selected, skipping reservation marking');
+          return;
+        }
+        
+        // Clear all previous markings
+        const allCells = document.querySelectorAll('td[data-row]');
+        if (allCells && allCells.length > 0) {
+          allCells.forEach(cell => {
+            cell.classList.remove('reserved');
+          });
+        }
+        
+        if (!Array.isArray(reservations)) {
+          console.error('Reservations is not an array:', reservations);
+          return;
+        }
+        
+        reservations.forEach(reservation => {
+          const seatRowNumber = getSeatRowNumber(reservation.seat);
+          const startSlot = timeToSlotIndex(reservation.resDate.start);
+          const endSlot = timeToSlotIndex(reservation.resDate.end);
+          
+          console.log(`Reservation for ${reservation.seat}:`, {
+            seat: reservation.seat,
+            rowNumber: seatRowNumber,
+            startTime: reservation.resDate.start,
+            endTime: reservation.resDate.end,
+            startSlot: startSlot,
+            endSlot: endSlot
+          });
+          
+          // Mark all slots from start to end as reserved
+          for (let slot = startSlot; slot <= endSlot; slot++) {
+            const cell = document.querySelector(`td[data-row="${seatRowNumber}"][data-col="${slot}"]`);
+            if (cell) {
+              cell.classList.add('reserved');
+              console.log(`Marked cell as reserved: row ${seatRowNumber}, col ${slot}`);
+            } else {
+              console.warn(`Cell not found: row ${seatRowNumber}, col ${slot}`);
             }
-            
-            function deleteReservation(id) {
-                    fetch(`/admin/delete/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            console.log('Error deleting reservation: ' + data.error);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        console.log('Error deleting reservation');
-                    });
-                
-            }
+          }
+        });
+      } catch (error) {
+        console.error('Error marking reservations:', error);
+      }
+    }
+
+    // Initialize the form with reservation data
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set the date from the original reservation
+      if (originalReservation && originalReservation.resDate && originalReservation.resDate.start) {
+        const resDate = new Date(originalReservation.resDate.start);
+        document.getElementById('date_select').value = resDate.toISOString().split('T')[0];
+      } else {
+        // Fallback to today's date
+        const today = new Date();
+        document.getElementById('date_select').value = today.toISOString().split('T')[0];
+      }
+      
+      // Set minimum date to today
+      const today = new Date();
+      document.getElementById('date_select').min = today.toISOString().split('T')[0];
+      
+      createTableRows();
+      updateDateHeader();
+      checkSubmitButton();
+      
+      // Add event listener for date changes
+      document.getElementById('date_select').addEventListener('change', function() {
+        updateDateHeader();
+        markReservations();
+      });
+    });
