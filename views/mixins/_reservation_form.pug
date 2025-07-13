@@ -1,71 +1,3 @@
-mixin styleBlock()
-  style.
-    .step { display: none; }
-    .step.active { display: block; }
-    .btn-back { 
-      background-color: #D9D9D9; 
-      color: #11414E; 
-      font-weight: 500; 
-      font-size: 20px; 
-      margin-right: 10px; 
-      border: none;
-      padding: 12px 24px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-back:hover { 
-      background-color: #11414E; 
-      color: #D9D9D9; 
-    }
-    .date-input-container {
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-    }
-    .date-input-container label {
-      font-weight: 500;
-      font-size: 18px;
-      color: #11414E;
-    }
-    .date-input-container input[type="date"] {
-      padding: 12px;
-      border: 1px solid #ffffff;
-      border-radius: 6px;
-      font-size: 16px;
-      background-color: #fff;
-      color: #11414E;
-      max-width: 200px;
-    }
-    .step2-container {
-      transform: scale(0.8);
-      transform-origin: top center;
-      overflow-x: auto;
-      overflow-y: hidden;
-      width: 125%;
-      margin-left: -12.5%;
-      padding-bottom: 20px;
-    }
-    .step2-content {
-      min-width: 1200px;
-      margin: 0 auto;
-    }
-    .step2-container::-webkit-scrollbar {
-      height: 8px;
-    }
-    .step2-container::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
-    .step2-container::-webkit-scrollbar-thumb {
-      background: #11414E;
-      border-radius: 4px;
-    }
-    .step2-container::-webkit-scrollbar-thumb:hover {
-      background: #3f7e8f;
-    }
-
 mixin step1()
   .step.active#step1.content-box.text-center.p-4
     h1 Reserve Laboratory Table
@@ -91,23 +23,29 @@ mixin step1()
     button#next-btn.main-btn.mt-3(onclick="nextStep()" disabled) Show Availability
 
 mixin step2(timeSlots)
-  .step#step2
-    h2 Step 2: Select Date and Time Slot
+  .step#step2.content-box.text-center.p-4
+    h1 Reserve Laboratory Table
     .selection-info
       strong Selected Location: 
       span#selected-location
-    .mb-3.d-flex.justify-content-center.gap-3.flex-wrap
-      label(for="date_select") 📅 Date:
-      input#date_select.form-control.w-auto(type="date" name="date_select" onchange="checkSubmitButton()")
-    table.time-table#time-table
-      thead 
-        tr
-          th
-          each timeSlot in timeSlots
-            th= timeSlot
-      tbody#table-body
-    button.btn.btn-back(onclick="prevStep()") Back
-    button#submit-btn.btn(onclick="submitForm()" disabled) Submit
+    .date-header#date-header
+      span#formatted-date
+    .date-input-container
+      label(for="date_select") 
+      input#date_select.form-control.w-auto(type="date" name="date_select" onchange="updateDateHeader(); checkSubmitButton();")
+    .d-flex.justify-content-center
+      .step2-container
+        .step2-content
+          table.time-table#time-table
+            thead 
+              tr
+                th
+                each timeSlot in timeSlots
+                  th= timeSlot
+            tbody#table-body
+    .mt-3
+      button.btn.btn-back(onclick="prevStep()") Back
+      button#submit-btn.btn(onclick="submitForm()" disabled) Submit
 
 mixin scriptBlock()
   script.
@@ -121,7 +59,36 @@ mixin scriptBlock()
       document.getElementById('date_select').min = formattedDate; // Prevent selecting past dates
       createTableRows();
       checkNextButton();
+      updateDateHeader(); // Update the date header on page load
     });
+    
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      const dayOfWeek = days[date.getDay()];
+      const month = months[date.getMonth()];
+      const day = date.getDate();
+      const year = date.getFullYear();
+      
+      return `${dayOfWeek}, ${month} ${day}, ${year}`;
+    }
+    
+    function updateDateHeader() {
+      const dateSelect = document.getElementById('date_select');
+      const dateHeader = document.getElementById('date-header');
+      const formattedDateSpan = document.getElementById('formatted-date');
+      
+      if (dateSelect.value) {
+        const formattedDate = formatDate(dateSelect.value);
+        formattedDateSpan.textContent = formattedDate;
+        dateHeader.classList.add('visible');
+      } else {
+        dateHeader.classList.remove('visible');
+      }
+    }
     
     function checkNextButton() {
       const buildingSelect = document.getElementById('building_select');
@@ -129,7 +96,7 @@ mixin scriptBlock()
       const nextBtn = document.getElementById('next-btn');
       
       // Enable next button only if building/room is selected
-      const hasLocation = buildingSelect.value || roomSelect.value;
+      const hasLocation = buildingSelect.value && roomSelect.value;
       nextBtn.disabled = !hasLocation;
     }
     
@@ -173,13 +140,6 @@ mixin scriptBlock()
       const col = parseInt(clickedCell.dataset.col);
       const rowCells = document.querySelectorAll(`td[data-row="${row}"]`);
       
-      // Clear previous selection for this row
-      rowCells.forEach(cell => {
-        if (cell.dataset.col !== '0') { // Don't affect row labels
-          cell.classList.remove('selected');
-        }
-      });
-      
       // Select current cell and adjacent cells
       rowCells.forEach(cell => {
         const cellCol = parseInt(cell.dataset.col);
@@ -199,7 +159,7 @@ mixin scriptBlock()
       
       rowCells.forEach(cell => {
         const cellCol = parseInt(cell.dataset.col);
-        if (cellCol === col || cellCol === col+1 || cellCol === col-1) {
+        if (cellCol === col) {
           cell.classList.remove("selected");
         }
       });
@@ -225,6 +185,9 @@ mixin scriptBlock()
         document.getElementById('selected-location').textContent = selectedLocation;
         document.getElementById('step1').classList.remove('active');
         document.getElementById('step2').classList.add('active');
+        
+        // Update date header when moving to step 2
+        updateDateHeader();
         
         // Reset selected cells when moving to step 2
         selectedCells = [];
