@@ -1,0 +1,69 @@
+extends layout.pug
+block content
+    .container
+        h1 Manage Reservations
+        if reservations && reservations.length > 0
+            .row
+                each reservation in reservations
+                    .col-md-4.mb-4
+                        .card
+                            .card-header
+                                h5.card-title #{reservation.lab} - Seat #{reservation.seat}
+                                small Booking ID: #{reservation._id}
+                            .card-body
+                                .reservation-details
+                                    p
+                                        strong Request Date: 
+                                        span #{reservation.reqDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                    p
+                                        strong Reservation Date: 
+                                        span #{reservation.resDate.start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                    p
+                                        strong Time: 
+                                        span #{reservation.resDate.start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - #{reservation.resDate.end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                    p
+                                        strong User: 
+                                        span #{reservation.anon ? 'anon' : (reservation.user ? reservation.user.username : 'Guest')}
+                                    if reservation.reservedStud
+                                        p
+                                            strong Students: 
+                                            span #{reservation.reservedStud}
+                            .card-footer
+                                .btn-group(role="group")
+                                    button.btn.btn-sm(onclick=`editReservation('${reservation._id}')`) Edit
+                                    button.btn.btn-sm(onclick=`deleteReservation('${reservation._id}')`) Delete
+        else
+            .alert.alert-info
+                h4 No Reservations Found
+                p There are currently no reservations in the system.
+        
+        .mt-4.newReserve
+            a.btn(href="/admin/add") Add New Reservation
+            
+        script.
+            function editReservation(id) {
+                // Redirect to edit page or show modal
+                window.location.href = `/admin/edit/${id}`;
+            }
+            
+            function deleteReservation(id) {
+                    fetch(`/admin/delete/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            console.log('Error deleting reservation: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        console.log('Error deleting reservation');
+                    });
+                
+            }

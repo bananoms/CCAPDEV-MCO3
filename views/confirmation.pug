@@ -1,5 +1,25 @@
 extends layout.pug
-
 block content
-      .content-box
-            h1 Booking has been confirmed!
+    .content-box.confirmation
+        h1 Booking has been confirmed!
+        .reservation-details
+            h2 Reservation Details
+            .detail-item
+                strong Booking ID: 
+                span #{reservation._id}
+            .detail-item
+                strong Full Name: 
+                span #{reservation.anon ? 'anon' : 'Regular User'}
+            .detail-item
+                strong Seat: 
+                span #{reservation.seat}
+            .detail-item
+                strong Lab: 
+                span #{reservation.lab}
+            .detail-item
+                  strong Reservation Date: 
+                  span #{reservation.resDate.start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            .detail-item
+                  strong Reservation Time: 
+                  span #{reservation.resDate.start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - #{reservation.resDate.end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+            .detail-item
