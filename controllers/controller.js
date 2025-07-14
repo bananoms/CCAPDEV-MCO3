@@ -2,6 +2,34 @@ const schemas = require('../models/schemas');
 const Reservations = schemas.reservations;
 const Profile = schemas.profile;
 
+// For Cloudinary usage of pictures from cloud
+const cloudinary = require('cloudinary');
+const multer = require('multer');
+
+const storage = multer.diskStorage({});
+
+const upload = multer({ storage });
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+})
+
+exports.upload = upload.single("image");
+
+exports.pushToCloudinary = (req, res, next) => {
+    if(req.file) {
+        cloudinary.uploader.upload(req.file.path)
+            .then((result) => {
+                req.body.image = result.public_id;
+                next();
+            })
+    } else {
+        next();
+    }
+}
+
 exports.reservePageGet = (req,res) => {
     res.render('index');
 }
@@ -84,9 +112,39 @@ exports.loginPageGet = (req,res) => {
     res.render('log_in');
 }
 
-exports.loginPagePost = async (req,res,next) => {
+exports.loginPagePost = async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
 
-}
+        if (!email || !password) {
+            return res.render('log_in', {
+                error: 'Please provide both email and password'
+            });
+        }
+
+        const user = await schemas.profile.findOne({
+            email: email,
+            hashedPassword: password
+        }).exec();
+
+        if (!user) {
+            return res.render('log_in', {
+                error: 'Invalid email or password',
+                email: email // Optionally preserve the email
+            });
+        }
+
+        // If login successful, redirect to user's profile
+        res.redirect(`/user/${user._id}`);
+
+    } catch (error) {
+        console.error('Login error:', error);
+        res.render('log_in', {
+            error: 'An error occurred during login',
+            email: req.body.email // Optionally preserve the email
+        });
+    }
+};
 
 exports.signupPageGet = (req,res) => {
     res.render('sign_up');
@@ -142,6 +200,8 @@ exports.signupPagePost = async (req, res, next) => {
     }
 };
 
+
+
 exports.getReservations = async (req, res) => {
   try {
     const { lab, resDateStart } = req.query;
@@ -175,6 +235,7 @@ exports.getReservations = async (req, res) => {
     });
   }
 };
+
 exports.UserGet = async (req, res) => {
     try {
         const userId = req.params.id;
@@ -247,6 +308,7 @@ exports.UserGet = async (req, res) => {
         });
     }
 };
+
 exports.UsersSearchGet = async (req, res) => {
     try {
         const searchTerm = req.params.search_term;        
@@ -276,6 +338,7 @@ exports.UsersSearchGet = async (req, res) => {
         });
     }
 }
+
 exports.adminPageGet = (req,res) => {
     res.render('admin');
 }
@@ -376,6 +439,7 @@ exports.adminEditPageGet = async (req, res) => {
         });
     }
 };
+
 exports.adminDelete = async (req, res) => {
     try {
         const reservationId = req.params.id;
@@ -413,6 +477,3 @@ exports.adminDelete = async (req, res) => {
         });
     }
 };
-
-
-

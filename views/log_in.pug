@@ -1,19 +1,21 @@
 extends layout.pug
 
 block content
-    .login-container
-      .image-panel
-      .form-panel
-        h1 Welcome Back!
-        p Please Login to your Laboratory Account
-        form(method="POST", action="/")
-          .form-group
-            input.form-control(type="email", placeholder="Email Address", required)
-          .form-group
-            input.form-control(type="password", placeholder="Password", required)
-          .submit-fields.mt-3
-            .buttn
-              button.btn.main-btn(type="submit") Login
-              p.signup.mt-2
-                | Don't have an account?  
-                a(href="/sign-up")   Sign up
+  .login-container
+    .image-panel
+    .form-panel
+      h1 Welcome Back!
+      p Please Login to your Laboratory Account
+      if error
+        .alert.alert-danger= error
+      form(method="POST", action="/log-in")
+        .form-group
+          input.form-control(type="email", name="email", placeholder="Email Address", required)
+        .form-group
+          input.form-control(type="password", name="password", placeholder="Password", required)
+        .submit-fields.mt-3
+          .button
+            button.btn.main-btn(type="submit") Login
+            p.signup.mt-2
+              | Don't have an account?
+              a(href="/sign-up")   Sign up
