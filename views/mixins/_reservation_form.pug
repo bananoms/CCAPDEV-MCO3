@@ -162,7 +162,7 @@ mixin scriptBlock()
       } else {
         const currentSelectedCols = Object.keys(selectedCells).map(key => parseInt(key)).sort((a, b) => a - b);
 
-        if (currentSelectedCols.length === 0) {
+        if (currentSelectedCols.length == 0) {
           clickedCell.classList.add('selected');
           selectedCells[col] = {
             seat: seat,
@@ -506,7 +506,7 @@ mixin scriptBlock()
           reservations.forEach(reservation => {
             const seatRowNumber = getSeatRowNumber(reservation.seat);
             const startSlot = timeToSlotIndex(reservation.resDate.start);
-            const endSlot = timeToSlotIndex(reservation.resDate.end);
+            const endSlot = timeToSlotIndex(reservation.resDate.end) - 1;
             
             console.log(`Processing reservation:`, {
               seat: reservation.seat,

@@ -383,7 +383,7 @@ mixin scriptBlock(reservation)
         reservations.forEach(reservation => {
           const seatRowNumber = getSeatRowNumberEdit(reservation.seat);
           const startSlot = timeToSlotIndexEdit(reservation.resDate.start);
-          const endSlot = timeToSlotIndexEdit(reservation.resDate.end);
+          const endSlot = timeToSlotIndexEdit(reservation.resDate.end) - 1;
           
           // Mark all slots from start to end
           for (let slot = startSlot; slot <= endSlot; slot++) {
