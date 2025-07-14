@@ -175,10 +175,107 @@ exports.getReservations = async (req, res) => {
     });
   }
 };
-exports.UserGet = async (req,res) => {
-    console.log("user get")
-}
+exports.UserGet = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        // Validate if the ID is a valid MongoDB ObjectId
+        if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).render('error', {
+                message: 'Invalid user ID format',
+                error: { status: 400 }
+            });
+        }
 
+        // Find the user profile by ID, excluding sensitive fields
+        const userProfile = await Profile.findById(userId).select('-hashedPassword -salt');
+        
+        if (!userProfile) {
+            return res.status(404).render('error', {
+                message: 'User profile not found',
+                error: { status: 404 }
+            });
+        }
+
+        // Fetch user's reservations (assuming you have a Reservation model)
+        // Replace 'Reservation' with your actual model name
+        let userReservations = [];
+        try {
+            // Assuming reservations have a 'userId' field that references the user
+            userReservations = await Reservation.find({ userId: userId })
+                .populate('labId', 'name') // If you have lab references
+                .sort({ reservationDate: -1 }) // Sort by most recent
+                .limit(10); // Limit to recent 10 reservations
+        } catch (reservationError) {
+            console.log('No reservations found or Reservation model not available:', reservationError.message);
+            // Continue without reservations if model doesn't exist
+        }
+
+        // Format reservations for the mixin
+        const formattedReservations = userReservations.map(reservation => ({
+            id: reservation._id,
+            name: reservation.labName || reservation.labId?.name || `Reservation ${reservation._id}`,
+            date: reservation.reservationDate,
+            status: reservation.status || 'confirmed'
+        }));
+
+        // Render the profile page with the mixin data
+        res.render('user_profile', {
+            title: `${userProfile.firstName} ${userProfile.lastName} - Profile`,
+            profile: {
+                id: userProfile._id,
+                firstName: userProfile.firstName,
+                lastName: userProfile.lastName,
+                img: userProfile.img,
+                email: userProfile.email,
+                type: userProfile.type,
+                profilePicture: userProfile.profilePicture,
+                namePronunciation: userProfile.namePronunciation,
+                biography: userProfile.biography,
+                socialLinks: userProfile.socialLinks || {},
+                createdAt: userProfile.createdAt
+            },
+            userReservations: formattedReservations,
+            currentUserId: req.session?.userId || null // For checking if viewing own profile
+        });
+
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        res.status(500).render('error', {
+            message: 'Error loading user profile',
+            error: error
+        });
+    }
+};
+exports.UsersSearchGet = async (req, res) => {
+    try {
+        const searchTerm = req.params.search_term;        
+        // Rest of your code remains the same...
+        const searchQuery = {
+            $or: [
+                { firstName: { $regex: searchTerm, $options: 'i' } },
+                { lastName: { $regex: searchTerm, $options: 'i' } },
+                { email: { $regex: searchTerm, $options: 'i' } },
+                { type: { $regex: searchTerm, $options: 'i' } },
+            ]
+        };
+        
+        const profiles = await Profile.find(searchQuery).select('-hashedPassword -salt');
+        
+        res.render('search_users_results', {
+            title: `Search Results for "${searchTerm}"`,
+            profiles: profiles,
+            searchTerm: searchTerm,
+            resultsCount: profiles.length
+        });
+    } catch (error) {
+        console.error('Error searching profiles:', error);
+        res.status(500).render('error', {
+            message: 'Error searching profiles',
+            error: error
+        });
+    }
+}
 exports.adminPageGet = (req,res) => {
     res.render('admin');
 }
