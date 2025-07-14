@@ -2,34 +2,6 @@ const schemas = require('../models/schemas');
 const Reservations = schemas.reservations;
 const Profile = schemas.profile;
 
-// For Cloudinary usage of pictures from cloud
-const cloudinary = require('cloudinary');
-const multer = require('multer');
-
-const storage = multer.diskStorage({});
-
-const upload = multer({ storage });
-
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-})
-
-exports.upload = upload.single("image");
-
-exports.pushToCloudinary = (req, res, next) => {
-    if(req.file) {
-        cloudinary.uploader.upload(req.file.path)
-            .then((result) => {
-                req.body.image = result.public_id;
-                next();
-            })
-    } else {
-        next();
-    }
-}
-
 exports.reservePageGet = (req,res) => {
     res.render('index');
 }
@@ -112,39 +84,9 @@ exports.loginPageGet = (req,res) => {
     res.render('log_in');
 }
 
-exports.loginPagePost = async (req, res, next) => {
-    try {
-        const { email, password } = req.body;
+exports.loginPagePost = async (req,res,next) => {
 
-        if (!email || !password) {
-            return res.render('log_in', {
-                error: 'Please provide both email and password'
-            });
-        }
-
-        const user = await schemas.profile.findOne({
-            email: email,
-            hashedPassword: password
-        }).exec();
-
-        if (!user) {
-            return res.render('log_in', {
-                error: 'Invalid email or password',
-                email: email // Optionally preserve the email
-            });
-        }
-
-        // If login successful, redirect to user's profile
-        res.redirect(`/user/${user._id}`);
-
-    } catch (error) {
-        console.error('Login error:', error);
-        res.render('log_in', {
-            error: 'An error occurred during login',
-            email: req.body.email // Optionally preserve the email
-        });
-    }
-};
+}
 
 exports.signupPageGet = (req,res) => {
     res.render('sign_up');
@@ -199,34 +141,41 @@ exports.signupPagePost = async (req, res, next) => {
         });
     }
 };
-
-
-
 exports.getReservations = async (req, res) => {
   try {
     const { lab, resDateStart } = req.query;
     let query = {};
-
+   
     if (lab) query.lab = lab;
-
+   
     if (resDateStart) {
-      const date = new Date(resDateStart);
-      const nextDate = new Date(date);
-      nextDate.setUTCDate(date.getUTCDate() + 1);
-
+      // Parse the date (this will be interpreted as local date)
+      const localDate = new Date(resDateStart);
+      
+      // For UTC+8, we need to find the UTC range that corresponds to the full day in UTC+8
+      // Start of day in UTC+8 = subtract 8 hours from UTC
+      const startDate = new Date(localDate);
+      startDate.setUTCHours(0 - 8, 0, 0, 0); // This gives us 16:00 UTC of previous day
+      
+      // End of day in UTC+8 = start of next day minus 8 hours
+      const endDate = new Date(localDate);
+      endDate.setUTCDate(localDate.getUTCDate() + 1);
+      endDate.setUTCHours(0 - 8, 0, 0, 0); // This gives us 16:00 UTC of the same day
+      
+      console.log(`Searching for reservations on ${resDateStart} (UTC+8)`);
+      console.log(`UTC range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      
       query['resDate.start'] = {
-        $gte: date,
-        $lt: nextDate
+        $gte: startDate,
+        $lt: endDate
       };
     }
-
+   
     const reservations = await Reservations.find(query).lean();
-
     res.json({
       success: true,
       reservations
     });
-
   } catch (error) {
     console.error('Error fetching reservations:', error);
     res.status(500).json({
@@ -235,7 +184,6 @@ exports.getReservations = async (req, res) => {
     });
   }
 };
-
 exports.UserGet = async (req, res) => {
     try {
         const userId = req.params.id;
@@ -308,7 +256,6 @@ exports.UserGet = async (req, res) => {
         });
     }
 };
-
 exports.UsersSearchGet = async (req, res) => {
     try {
         const searchTerm = req.params.search_term;        
@@ -338,7 +285,6 @@ exports.UsersSearchGet = async (req, res) => {
         });
     }
 }
-
 exports.adminPageGet = (req,res) => {
     res.render('admin');
 }
@@ -439,7 +385,6 @@ exports.adminEditPageGet = async (req, res) => {
         });
     }
 };
-
 exports.adminDelete = async (req, res) => {
     try {
         const reservationId = req.params.id;
@@ -477,3 +422,6 @@ exports.adminDelete = async (req, res) => {
         });
     }
 };
+
+
+
