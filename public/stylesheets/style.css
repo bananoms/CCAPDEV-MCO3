@@ -24,26 +24,41 @@
         p {
             margin-bottom: 25px;
         }
-
+        .btn
+        {
+            background-color: #11414E;
+            color: #FAD465;
+        }
         .main-btn {
             background-color: #11414E;
             color: #FAD465;
             font-weight: 500;
             font-size: 20px;
             width: 418px;
-        }
-
-        .content-box button:hover {
-            background-color: #3f7e8f;
-            color: #FAD465;
+            border-radius: 7px;
+            border-color: #11414E;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            box-shadow: none;
         }
         .main-btn:disabled 
         { 
           background-color: #4d4d4d; 
+          border-color: #4d4d4d;
           color: rgb(204, 204, 204);
           cursor: not-allowed; 
-
         }
+        .content-box .main-btn:disabled:hover
+        {
+          background-color: #4d4d4d; 
+          color: rgb(204, 204, 204);
+        }
+        .content-box button:hover {
+            background-color: #3f7e8f;
+            border-color: #3f7e8f;
+            color: #FAD465;
+        }
+
         .content-box {
             background-color: #FAEECF;
             border-radius: 30px;
@@ -57,6 +72,9 @@
             max-width: 200px;
             display: inline-block;
             margin: 10px;
+        }
+        select option{
+          font-family: Satoshi-Variable !important;
         }
 
         .navbar {
@@ -134,7 +152,7 @@
             gap: 15px;
         }
 
-        img.profile-pic {
+        .profile-pic {
             width: 250px;
             height: 250px;
             border-radius: 50%;
@@ -354,6 +372,7 @@
       cursor: default;
     }
     .time-table td:hover { background-color: #e9ecef; }
+    .time-table td.reserved { background-color: #bd8e90 !important; color: white; }
     .time-table td.selected { background-color: #8EBD9D !important; color: white; }
     .time-table td:first-child { font-weight: bold; background-color: #FFF5D0; cursor: default; }
     .time-table td:first-child:hover { background-color: #FFF5D0; }
@@ -362,7 +381,7 @@
     }
     .step { display: none; }
     .step.active { display: block; }
-    .btn-back { 
+    .btn-back, .submit{ 
       background-color: #D9D9D9; 
       color: #11414E; 
       font-weight: 500; 
@@ -373,9 +392,20 @@
       border-radius: 6px;
       cursor: pointer;
     }
+    .submit
+    {
+      background-color: #11414E;
+      color: #FAD465;
+    }
     .btn-back:hover { 
       background-color: #11414E; 
       color: #D9D9D9; 
+    }
+    .submit:hover
+    {
+      background-color: #3f7e8f;
+      border-color: #3f7e8f;
+      color: #FAD465;
     }
     .date-input-container {
       margin-bottom: 20px;
@@ -429,4 +459,220 @@
     }
     .step2-container::-webkit-scrollbar-thumb:hover {
       background: #3f7e8f;
+    }
+    .confirmation
+    {   
+        text-align: left;
+    }
+    .reservation-details
+    {
+        margin-top: 20px;
+    }
+    .reservation-details p
+    {
+        margin-bottom: 10px;
+    }
+    .card-body, .alert.alert-info
+    {
+        background-color: #FAEECF;
+    }
+    .alert.alert-info
+    {
+        border: 0px;
+    }
+    .card-header, .card-footer
+    {
+        background-color: #eee4c8;
+        color: #11414E;
+    }
+    .card-footer .btn
+    {
+        border-radius: 5px;
+        margin-right: 5px;
+    }
+    .newReserve
+    {
+        margin-bottom: 30px;
+    }
+    .newReserve .btn
+    {
+        background-color: #FAEECF;
+        color: #11414E;
+    }
+
+    .search-info {
+      text-align: center;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #FAEECF;
+      color: #11414E;
+      border-radius: 6px;
+    }
+    .search-header
+    {
+      margin-top: 100px;
+    }
+    .search-term {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #333;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .results-count {
+      color: #666;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .clear-search {
+      color: #007bff;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    
+    .clear-search:hover {
+      text-decoration: underline;
+    }
+    
+    .profiles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 2rem;
+      padding: 2rem 0;
+    }
+    
+    .profile-card {
+      border-radius: 8px;
+      padding: 1.5rem;
+      background: #FAEECF;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      cursor: pointer;
+    }
+    
+    .profile-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    .profile-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .profile-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin-right: 1rem;
+      object-fit: cover;
+    }
+    .profile-avatar span
+    {
+      color:#FAD465;
+    }
+    .default-avatar {
+      background: #1e6e85;
+      color: #FAD465;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    
+    .profile-name {
+      margin: 0;
+      color: #11414E;
+      font-size: 1.25rem;
+    }
+    
+    .profile-email {
+      margin: 0.25rem 0;
+      color: #1e6e85;
+      font-size: 0.9rem;
+    }
+    
+    .profile-type {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .type-student { background: #b4BD62; color: white; }
+    .type-lab-technician { background: #8EBD9D; color: white; }
+    
+    .profile-details {
+      margin: 1rem 0;
+    }
+    
+    .profile-bio {
+      color: #555;
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+    
+    .empty-search, .search-prompt {
+      text-align: center;
+      padding: 3rem;
+      color: #666;
+    }
+    
+    .empty-icon, .search-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .empty-search h2, .search-prompt h2 {
+      color: #333;
+      margin-bottom: 1rem;
+    }
+    
+    .search-suggestions, .search-tips {
+      margin-top: 2rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .suggestions-title, .tips-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+    
+    .suggestions-list, .tips-list {
+      text-align: left;
+      color: #666;
+    }
+    
+    .suggestions-list li, .tips-list li {
+      margin-bottom: 0.25rem;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .search-input-group {
+        flex-direction: column;
+      }
+      
+      .search-btn {
+        border-radius: 0 0 6px 6px;
+      }
+      
+      .profiles-grid {
+        grid-template-columns: 1fr;
+      }
     }
