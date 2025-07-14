@@ -17,7 +17,8 @@ router.post('/log-in', controller.loginPagePost);
 router.get('/sign-up', controller.signupPageGet);
 router.post('/sign-up', controller.signupPagePost);
 
-router.get('/users/:id', controller.UserGet);
+router.get('/search/:search_term', controller.UsersSearchGet);
+router.get('/user/:id', controller.UserGet);
 
 /* Admin Functions*/
 router.get('/admin', controller.adminPageGet);
