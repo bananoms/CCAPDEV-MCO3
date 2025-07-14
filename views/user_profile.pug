@@ -1,0 +1,6 @@
+//- views/profiles.pug
+extends layout
+include mixins/_user.pug
+block content
+    //+logged_out_profile_display(profile, reservations) // Condition idk man
+    +logged_profile_display(profile, reservations)

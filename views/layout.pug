@@ -8,10 +8,20 @@ html
     nav.navbar.navbar-expand-lg
       .container-fluid
         a.navbar-brand(href="/") LabAccess
-        form.d-md-flex.ms-auto
-          input.form-control.me-2.search-input(type="search", placeholder="Search", aria-label="Search")
+        form.d-md-flex.ms-auto(method="GET", action="/search", onsubmit="return handleSearch(this)")
+          input.form-control.me-2.search-input(type="search", name="search_term", placeholder="Search", aria-label="Search", required)
         .d-flex
           a.nav-link(href="/") Home
           a.nav-link(href="/about") About
           a.nav-link(href="/log-in") Login
     block content
+
+    script.
+      function handleSearch(form) {
+        const searchTerm = form.search_term.value.trim();
+        if (searchTerm) {
+          // Redirect to /search/:search_term format
+          window.location.href = `/search/${encodeURIComponent(searchTerm)}`;
+        }
+        return false; // Prevent normal form submission
+      }

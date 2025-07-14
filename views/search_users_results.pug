@@ -1,0 +1,38 @@
+//- views/user.pug
+extends layout
+include mixins/_user_search_result.pug
+block content
+  .container
+    .search-header
+      if searchTerm
+          .search-info
+            p.search-term= `Showing results for: "${searchTerm}"`
+            p.results-count= `${resultsCount} ${resultsCount === 1 ? 'profile' : 'profiles'} found`
+    
+    .search-results
+      if profiles && profiles.length > 0
+        .profiles-grid
+          each profile in profiles
+            +profile-card(profile)
+  script.
+    // Auto-focus search input on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.querySelector('.search-input');
+      if (searchInput && !searchInput.value) {
+        searchInput.focus();
+      }
+    });
+    
+    // Handle search form submission with URL parameter routing
+    document.querySelector('.search-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const searchTerm = document.querySelector('.search-input').value.trim();
+      
+      if (searchTerm) {
+        // Route to /search/{search_term} format
+        window.location.href = `/search/${encodeURIComponent(searchTerm)}`;
+      } else {
+        // Route to /search for empty search
+        window.location.href = '/search';
+      }
+    });
