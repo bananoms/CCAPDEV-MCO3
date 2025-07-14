@@ -1,0 +1,14 @@
+//- views/mixins/profile-card.pug
+mixin profile-card(profile)
+  a.profile-card(href=`/user/${profile._id}`)
+    .profile-header
+      if profile.img
+        img.profile-avatar(src=profile.img alt=`${profile.firstName} ${profile.lastName} avatar`)
+      else
+        .profile-avatar.default-avatar
+          span= profile.firstName.charAt(0).toUpperCase() + profile.lastName.charAt(0).toUpperCase()
+      .profile-basic-info
+        h3.profile-name= `${profile.firstName} ${profile.lastName}`
+        p.profile-email= profile.email
+        if profile.type
+          span.profile-type(class=`type-${profile.type.toLowerCase().replace(' ', '-')}`)= profile.type

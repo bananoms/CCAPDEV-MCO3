@@ -1,47 +1,98 @@
-extends layout.pug
-
-block content
-.container-profile.container-fluid
-    //- Profile Section
+mixin logged_profile_display(profile, reservations)
+  .container-profile.container-fluid
     main.main-profile
       .profile-box
         .main-profile-flex
-          //- Left Side (Main Profile)
+          // Left Side (Main Profile)
           .left-profile
-            img.profile-pic(
-              src=config.profilePic
-              alt="profile picture"
-            )
-            h1= config.username
-            h3= config.role
+            if profile.img
+              img.profile-pic(src=profile.img alt=`${profile.firstName} ${profile.lastName} avatar`)
+            else
+              .profile-pic.default-avatar
+                span= profile.firstName.charAt(0).toUpperCase() + profile.lastName.charAt(0).toUpperCase()
+            h1= profile.firstName + ' ' + profile.lastName
+            span.profile-type(class=`type-${profile.type.toLowerCase().replace(' ', '-')}`)= profile.type
             .profile-details
               div
-                h4= config.pronouns
-                p= config.quote
+                h4 Name Pronunciation
+                p= profile.namePronunciation || 'No pronunciation provided'
               div
                 h4 Biography
-                p= config.biography
+                p= profile.biography || 'No biography provided'
             .social-links
-              a(href=config.socialLinks.instagram)
-                img(src="https://img.icons8.com/ios-filled/24/000000/instagram-new.png")
-              a(href=config.socialLinks.facebook)
-                img(src="https://img.icons8.com/ios-filled/24/000000/facebook-new.png")
-              a(href=config.socialLinks.twitter)
-                img(src="https://img.icons8.com/ios-filled/24/000000/twitter.png")
-              a(href=config.socialLinks.linkedin)
-                img(src="https://img.icons8.com/ios-filled/24/000000/linkedin.png")
-          
-          //- Right Side (Buttons)
+              if profile.socialLinks
+                if profile.socialLinks.instagram
+                  a(href=profile.socialLinks.instagram)
+                    img(src="https://img.icons8.com/ios-filled/24/000000/instagram-new.png")
+                if profile.socialLinks.facebook
+                  a(href=profile.socialLinks.facebook)
+                    img(src="https://img.icons8.com/ios-filled/24/000000/facebook-new.png")
+                if profile.socialLinks.twitter
+                  a(href=profile.socialLinks.twitter)
+                    img(src="https://img.icons8.com/ios-filled/24/000000/twitter.png")
+                if profile.socialLinks.linkedin
+                  a(href=profile.socialLinks.linkedin)
+                    img(src="https://img.icons8.com/ios-filled/24/000000/linkedin.png")
+          // Right Side (Buttons)
           .right-buttons
             button.btn.profile-btn Change Picture
             button.btn.profile-btn Edit Profile
             button.btn.profile-btn Delete Profile
-    
-    //- Reservation Sidebar
+    // Reservation Sidebar
     aside.sidebar
       .notif-box
         h2 Reservations
         a.order-by(href="#") Order By ⇅
         .reservation-list
-          each reservation in config.reservations
-            button.btn.notif-btn= reservation
+          if reservations && reservations.length > 0
+            each reservation in reservations
+              button.btn.notif-btn= reservation.name || `Reservation ${reservation.id}`
+          else
+            button.btn.notif-btn No reservations found
+
+mixin logged_out_profile_display(profile, reservations)
+  .container-profile.container-fluid
+    main.main-profile
+      .profile-box
+        .main-profile-flex
+          // Left Side (Main Profile)
+          .left-profile
+            if profile.img
+              img.profile-pic(src=profile.img alt=`${profile.firstName} ${profile.lastName} avatar`)
+            else
+              .profile-pic.default-avatar
+                span= profile.firstName.charAt(0).toUpperCase() + profile.lastName.charAt(0).toUpperCase()
+            h1= profile.firstName + ' ' + profile.lastName
+            span.profile-type(class=`type-${profile.type.toLowerCase().replace(' ', '-')}`)= profile.type
+            .profile-details
+              div
+                h4 Name Pronunciation
+                p= profile.namePronunciation || 'No pronunciation provided'
+              div
+                h4 Biography
+                p= profile.biography || 'No biography provided'
+            .social-links
+              if profile.socialLinks
+                if profile.socialLinks.instagram
+                  a(href=profile.socialLinks.instagram)
+                    img(src="https://img.icons8.com/ios-filled/24/000000/instagram-new.png")
+                if profile.socialLinks.facebook
+                  a(href=profile.socialLinks.facebook)
+                    img(src="https://img.icons8.com/ios-filled/24/000000/facebook-new.png")
+                if profile.socialLinks.twitter
+                  a(href=profile.socialLinks.twitter)
+                    img(src="https://img.icons8.com/ios-filled/24/000000/twitter.png")
+                if profile.socialLinks.linkedin
+                  a(href=profile.socialLinks.linkedin)
+                    img(src="https://img.icons8.com/ios-filled/24/000000/linkedin.png")
+    // Reservation Sidebar
+    aside.sidebar
+      .notif-box
+        h2 Reservations
+        a.order-by(href="#") Order By ⇅
+        .reservation-list
+          if reservations && reservations.length > 0
+            each reservation in reservations
+              button.btn.notif-btn= reservation.name || `Reservation ${reservation.id}`
+          else
+            button.btn.notif-btn No reservations found
