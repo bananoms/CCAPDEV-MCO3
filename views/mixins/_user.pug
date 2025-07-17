@@ -14,9 +14,6 @@ mixin logged_profile_display(profile, reservations)
             span.profile-type(class=`type-${profile.type.toLowerCase().replace(' ', '-')}`)= profile.type
             .profile-details
               div
-                h4 Name Pronunciation
-                p= profile.namePronunciation || 'No pronunciation provided'
-              div
                 h4 Biography
                 p= profile.biography || 'No biography provided'
             .social-links
