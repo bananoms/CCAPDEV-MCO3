@@ -111,6 +111,7 @@ exports.loginPageGet = (req,res) => {
     res.render('log_in');
 }
 
+
 exports.loginPagePost = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -121,29 +122,51 @@ exports.loginPagePost = async (req, res, next) => {
             });
         }
 
-        const user = await schemas.profile.findOne({
-            email: email,
-            hashedPassword: password
-        }).exec();
+        const user = await schemas.profile.findOne({ email }).exec();
 
         if (!user) {
             return res.render('log_in', {
                 error: 'Invalid email or password',
-                email: email // Optionally preserve the email
+                email
             });
         }
 
-        // If login successful, redirect to user's profile
-        res.redirect(`/user/${user._id}`);
+        const bcrypt = require('bcrypt');
+        const match = await bcrypt.compare(password, user.hashedPassword);
+
+        if (!match) {
+            return res.render('log_in', {
+                error: 'Invalid email or password',
+                email
+            });
+        }
+
+        // ✅ Set session
+        req.session.userId = user._id;
+        req.session.userType = user.type;
+
+        // ✅ Optionally update lastLogin
+        user.lastLogin = new Date();
+        await user.save();
+
+        // ✅ Redirect based on role
+        if (user.type === 'Admin') {
+            return res.redirect('/admin');
+        } else if (user.type === 'Lab Technician') {
+            return res.redirect('/technician-dashboard'); // Create later
+        } else {
+            return res.redirect(`/user/${user._id}`);
+        }
 
     } catch (error) {
         console.error('Login error:', error);
         res.render('log_in', {
             error: 'An error occurred during login',
-            email: req.body.email // Optionally preserve the email
+            email: req.body.email
         });
     }
 };
+
 
 exports.signupPageGet = (req,res) => {
     res.render('sign_up');
