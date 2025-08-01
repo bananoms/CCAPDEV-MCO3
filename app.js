@@ -41,7 +41,7 @@ app.use(session({
   saveUninitialized: true,
 }));
 
-// ✅ INSERTED MIDDLEWARE HERE
+// INSERTED MIDDLEWARE HERE
 app.use((req, res, next) => {
   res.locals.session = req.session;
   next();
