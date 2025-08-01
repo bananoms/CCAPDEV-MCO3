@@ -13,7 +13,20 @@ html
         .d-flex
           a.nav-link(href="/") Home
           a.nav-link(href="/about") About
-          a.nav-link(href="/log-in") Login
+
+          if session && session.userType === 'Admin'
+            a.nav-link(href="/admin") Admin Panel
+          if session && session.userType === 'Lab Technician'
+            a.nav-link(href="/admin/edit") Manage Reservations
+          if session && session.userType === 'Student'
+            a.nav-link(href="/user/" + session.userId) My Profile
+
+          if session && session.userId
+            a.nav-link(href="/log-out") Log Out
+          else
+            a.nav-link(href="/log-in") Login
+            a.nav-link(href="/sign-up") Sign Up
+
     block content
 
     script.
