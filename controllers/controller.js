@@ -198,6 +198,14 @@ exports.signupPagePost = async (req, res, next) => {
             });
         }
 
+        // Possibly for MCO3
+        // Only allow 'student' type during sign-up
+        // if (type !== 'student') {
+        //     return res.render('sign_up', {
+        //         error: 'Only student accounts can be created through sign-up'
+        //     });
+        // }
+
         // Create new user profile
         const newProfile = new Profile({
             firstName,
