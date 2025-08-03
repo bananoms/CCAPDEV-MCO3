@@ -5,7 +5,7 @@ const profileSchema = new Schema ({
     firstName: {type:String, required:true},
     lastName: {type:String, required:true},
     img: {type:String},
-    type: {type:String, required:true, enum:['Student', 'Lab Technician']},
+    type: {type:String, required:true, enum:['Student', 'Lab Technician', 'Admin']},
     bio: {type:String},
     email: {type:String, required:true},
     salt: { type: String},

@@ -1,4 +1,4 @@
-const { isLoggedIn, isAdmin, isTechnician, isStudent } = require('../middleware/middleware');
+const { isLoggedIn, isAdmin, isTechnician, isStudent } = require('../middleware');
 const express = require('express');
 const router = express.Router();
 
@@ -7,11 +7,11 @@ const controller = require('../controllers/controller');
 
 // Public routes
 router.get('/', controller.reservePageGet);
-router.post('/', isLoggedIn, isStudent, controller.reservePagePost); // only students can reserve
+router.post('/', controller.reservePagePost); // only students can reserve
 
 router.get('/api/reservations/', controller.getReservations); // reservation API (can be public or protected)
 
-router.get('/confirmation/:id', isLoggedIn, controller.confirmationPageGet);
+router.get('/confirmation/:id', controller.confirmationPageGet);
 router.get('/about', controller.aboutPageGet);
 router.get('/log-in', controller.loginPageGet);
 router.post('/log-in', controller.loginPagePost);
@@ -31,8 +31,8 @@ router.put('/admin/edit/:id', isLoggedIn, isAdmin, controller.adminEditUpdate);
 router.delete('/admin/delete/:id', isLoggedIn, isAdmin, controller.adminDelete);
 
 // Technician dashboard (you can create this controller and view)
-router.get('/technician-dashboard', isLoggedIn, isTechnician, controller.technicianPageGet);
-router.put('/technician/reschedule/:id', isLoggedIn, isTechnician, controller.technicianReschedule);
-router.delete('/technician/delete/:id', isLoggedIn, isTechnician, controller.technicianDelete);
+//router.get('/technician-dashboard', isLoggedIn, isTechnician, controller.technicianPageGet);
+//router.put('/technician/reschedule/:id', isLoggedIn, isTechnician, controller.technicianReschedule);
+//router.delete('/technician/delete/:id', isLoggedIn, isTechnician, controller.technicianDelete);
 
 module.exports = router;
