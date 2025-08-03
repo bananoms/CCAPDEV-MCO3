@@ -34,4 +34,5 @@ router.delete('/admin/delete/:id', isLoggedIn, isLabTech, controller.adminDelete
 
 // Admin only routes
 router.get('/admin/users', isLoggedIn, isAdmin, controller.adminUsers);
+router.delete('/admin/users/delete/:id', isLoggedIn, isAdmin, controller.UserDelete);
 module.exports = router;

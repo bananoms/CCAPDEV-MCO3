@@ -536,4 +536,29 @@ exports.adminUsers = async (req, res) => {
     }
 };
 
-
+// Delete user by MongoDB _id (ObjectId) passed as :id in the route
+exports.UserDelete = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        // Find and delete the user by _id
+        const deletedUser = await Profile.findByIdAndDelete(userId);
+        if (!deletedUser) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+        // Return success response
+        res.json({
+            success: true,
+            message: 'User deleted successfully',
+            deletedId: userId
+        });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error deleting user'
+        });
+    }
+};

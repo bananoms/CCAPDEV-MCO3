@@ -26,10 +26,6 @@ block content
                 .profile-actions.mt-2
                   button.btn.btn-sm.btn-outline-primary.me-2(type="button", onclick=`editUser('${user._id}')`) Edit
                   button.btn.btn-sm.btn-outline-danger(type="button", onclick=`deleteUser('${user._id}')`) Delete
-      else
-        .alert.alert-info
-          h4 No Users Found
-          p There are currently no users in the system.
   script.
     function editUser(id) {
       window.location.href = `/admin/users/edit/${id}`;
