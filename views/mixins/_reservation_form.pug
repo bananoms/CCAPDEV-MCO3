@@ -16,14 +16,15 @@ mixin step1()
         option(value="AG1904") AG1904
         option(value="LS209") LS209
         option(value="LS311") LS311
-    .mb-3
-      label.checkbox-label
-        input#anon_checkbox(type="checkbox" name="anon")
-        |&nbsp; Make this reservation anonymous
+    // Removed anonymous reservation checkbox
     button#next-btn.main-btn.mt-3(type="button" onclick="nextStep()" disabled) Show Availability
 
 mixin step2(timeSlots)
   .reservation-container#reservationForm
+    // Expose user object to client-side JS
+    if typeof user !== 'undefined'
+      script.
+        window.user = !#{JSON.stringify(user)} ? null : !function(){ try { return JSON.parse('#{JSON.stringify(user)}'); } catch(e) { return null; } }();
     .step#step2.content-box.text-center.p-4
       h1 Reserve Laboratory Table
       .selection-info
@@ -44,9 +45,13 @@ mixin step2(timeSlots)
                   each timeSlot in timeSlots
                     th= timeSlot
               tbody#table-body
+      // Message for unauthenticated users with selected cells
+      .login-required-header#login-required-header(style="display:none; margin-top: 1rem;")
+        span(style="background: #FAEECF; color: #11414E; padding: 8px 16px; border-radius: 8px; border: 0px solid #11414E; font-size: 1.1rem;")
+          | Please log in to submit a reservation.
       .mt-3
         button.btn.btn-back(type="button" onclick="prevStep()") Back
-        button#submit-btn.btn.submit(type="button" onclick="submitForm()") Submit
+        button#submit-btn.btn.submit(type="button" onclick="submitForm()" disabled=!(typeof user !== 'undefined' && user && user.userId)) Submit
 mixin scriptBlock()
   script.
     let selectedCells = [];
@@ -89,7 +94,18 @@ mixin scriptBlock()
     function checkSubmitButton() {
       const submitBtn = document.getElementById('submit-btn');
       const dateSelect = document.getElementById('date_select');
-      submitBtn.disabled = !(dateSelect.value && Object.keys(selectedCells).length > 0);
+      const loginRequiredHeader = document.getElementById('login-required-header');
+      // Use the correct logic for user and user.userId
+      let userObj = (typeof window !== 'undefined' && window.user) ? window.user : (typeof user !== 'undefined' ? user : undefined);
+      let userExists = userObj && userObj.userId;
+      const hasSelection = dateSelect.value && Object.keys(selectedCells).length > 0;
+      //submitBtn.disabled = !(false);
+      // Show login required message if cells are selected but not logged in
+      if (hasSelection && !userExists) {
+        loginRequiredHeader.style.display = 'block';
+      } else {
+        loginRequiredHeader.style.display = 'none';
+      }
     }
 
     function createTableRows() {
@@ -265,42 +281,27 @@ mixin scriptBlock()
     }
     
     function submitForm() {
+
       const labSelect = document.getElementById('lab_select');
       const dateSelect = document.getElementById('date_select');
-      const anonCheckbox = document.getElementById('anon_checkbox');
 
       function timeToSlotIndex(timeString) {
         const date = new Date(timeString);
-        
-        // Get local time components
         const hours = date.getHours();
         const minutes = date.getMinutes();
-        
-        console.log(`Converting time: ${timeString} -> ${hours}:${minutes.toString().padStart(2, '0')}`);
-        
-        // 7:00 AM = slot 1, 7:30 AM = slot 2, etc.
         const baseHour = 7;
-        
-        // Calculate slot index: each hour has 2 slots (30-minute intervals)
         let slotIndex = ((hours - baseHour) * 2) + 1;
-        
-        // Add 1 more if minutes >= 30 (for the second half-hour slot)
         if (minutes >= 30) {
           slotIndex += 1;
         }
-        console.log(`Calculated slot index: ${slotIndex}`);
-    
-          // Ensure slot index is within valid range (1-29)
-          return Math.max(1, Math.min(29, slotIndex));
+        return Math.max(1, Math.min(29, slotIndex));
       }
-      
+
       function getSeatRowNumber(seatString) {
-        // Extract row number from seat string (e.g., "A3" -> 3)
         const match = seatString.match(/[A-Z](\d+)/);
         return match ? parseInt(match[1]) : 1;
       }
 
-      
       const timeSlots = ['07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'];
 
       const selectedTimeSlots = Object.keys(selectedCells).map(key => parseInt(key)).sort((a, b) => a - b);
@@ -322,6 +323,16 @@ mixin scriptBlock()
 
       const firstSelectedCell = selectedCells[selectedTimeSlots[0]];
 
+
+      // Attach logged-in user to reservation if available
+      let reservationUser = undefined;
+      let reservationFullName = undefined;
+      let userObj = (typeof window !== 'undefined' && window.user) ? window.user : (typeof user !== 'undefined' ? user : undefined);
+      if (userObj && userObj.userId) {
+        reservationUser = userObj.userId;
+        reservationFullName = (userObj.firstName ? userObj.firstName : '') + (userObj.lastName ? ' ' + userObj.lastName : '');
+      }
+
       const reservation = {
         seat: firstSelectedCell.seat,
         lab: labSelect.value,
@@ -330,7 +341,8 @@ mixin scriptBlock()
           start: startDateTime,
           end: endDateTime
         },
-        anon: anonCheckbox.checked
+        user: reservationUser,
+        fullName: reservationFullName
       };
 
       fetch('/', {
@@ -345,7 +357,6 @@ mixin scriptBlock()
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            // Redirect to confirmation page with booking ID
             window.location.href = `/confirmation/${data.bookingId}`;
           } else {
             alert('Error submitting reservation: ' + (data.error || 'Unknown error'));
@@ -469,7 +480,7 @@ mixin scriptBlock()
     function checkSubmitButtonEdit() {
       const submitBtn = document.getElementById('submit-btn-edit');
       const dateSelect = document.getElementById('date_select_edit');
-      submitBtn.disabled = !(dateSelect.value && Object.keys(selectedCellsEdit).length > 0);
+      submitBtn.disabled = !(dateSelect.value && Object.keys(selectedCellsEdit).length > 1);
     }
     // Fixed markReservations function - now async and filters by current date/lab
       async function markReservations() {
@@ -507,27 +518,78 @@ mixin scriptBlock()
             const seatRowNumber = getSeatRowNumber(reservation.seat);
             const startSlot = timeToSlotIndex(reservation.resDate.start);
             const endSlot = timeToSlotIndex(reservation.resDate.end) - 1;
-            
-            console.log(`Processing reservation:`, {
+            // Info for tooltip
+            const info = {
               seat: reservation.seat,
-              rowNumber: seatRowNumber,
-              startTime: reservation.resDate.start,
-              endTime: reservation.resDate.end,
-              startSlot: startSlot,
-              endSlot: endSlot
-            });
-            
-            // Mark all slots from start to end as reserved
+              lab: reservation.lab,
+              reqDate: reservation.reqDate,
+              resStart: reservation.resDate.start,
+              resEnd: reservation.resDate.end,
+              anon: reservation.anon,
+              user: reservation.user && reservation.user.username ? reservation.user.username : 'N/A',
+              reservedStud: reservation.reservedStud
+            };
             for (let slot = startSlot; slot <= endSlot; slot++) {
               const cell = document.querySelector(`td[data-row="${seatRowNumber}"][data-col="${slot}"]`);
               if (cell) {
                 cell.classList.add('reserved');
-                console.log(`Marked cell as reserved: row ${seatRowNumber}, col ${slot}`);
-              } else {
-                console.warn(`Cell not found: row ${seatRowNumber}, col ${slot}`);
+                // Attach reservation info as data attributes
+                cell.dataset.reservationInfo = JSON.stringify(info);
+                // Add hover listeners if not already present
+                if (!cell.dataset.tooltipBound) {
+                  cell.addEventListener('mouseenter', showReservationTooltip);
+                  cell.addEventListener('mouseleave', hideReservationTooltip);
+                  cell.dataset.tooltipBound = 'true';
+                }
               }
             }
           });
+    // Tooltip functions
+    function showReservationTooltip(e) {
+      let info = {};
+      try {
+        info = JSON.parse(e.currentTarget.dataset.reservationInfo);
+      } catch {}
+      let tooltip = document.getElementById('reservation-tooltip');
+      if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'reservation-tooltip';
+        tooltip.style.position = 'fixed';
+        tooltip.style.zIndex = 9999;
+        tooltip.style.pointerEvents = 'none';
+        tooltip.style.background = '#FAEECF';
+        tooltip.style.border = '1px solid #11414E';
+        tooltip.style.color = '#11414E';
+        tooltip.style.padding = '10px 16px';
+        tooltip.style.borderRadius = '8px';
+        tooltip.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+        tooltip.style.fontSize = '15px';
+        document.body.appendChild(tooltip);
+      }
+      tooltip.innerHTML =
+        `<strong>Seat:</strong> ${info.seat || ''}<br>` +
+        `<strong>Lab:</strong> ${info.lab || ''}<br>` +
+        `<strong>Request Date:</strong> ${info.reqDate ? new Date(info.reqDate).toLocaleString() : ''}<br>` +
+        `<strong>Reservation:</strong> ${info.resStart ? new Date(info.resStart).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''} - ${info.resEnd ? new Date(info.resEnd).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}<br>` +
+        `<strong>User:</strong> ${info.anon ? 'Anonymous' : (info.user || 'N/A')}<br>` +
+        (info.reservedStud ? `<strong>Students:</strong> ${info.reservedStud}<br>` : '');
+      // Position tooltip near mouse
+      function moveTooltip(ev) {
+        tooltip.style.left = (ev.clientX + 16) + 'px';
+        tooltip.style.top = (ev.clientY + 16) + 'px';
+      }
+      moveTooltip(e);
+      document.addEventListener('mousemove', moveTooltip);
+      e.currentTarget._moveTooltip = moveTooltip;
+    }
+    function hideReservationTooltip(e) {
+      const tooltip = document.getElementById('reservation-tooltip');
+      if (tooltip) tooltip.remove();
+      if (e.currentTarget._moveTooltip) {
+        document.removeEventListener('mousemove', e.currentTarget._moveTooltip);
+        delete e.currentTarget._moveTooltip;
+      }
+    }
         } catch (error) {
           console.error('Error marking reservations:', error);
         }
