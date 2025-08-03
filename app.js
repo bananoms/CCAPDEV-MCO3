@@ -14,29 +14,24 @@ const { authenticateJWT } = require('./middleware');
 
 const app = express();
 
+
 // Add these middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
 
-// Print login status for every request (after JWT middleware)
-app.use((req, res, next) => {
-  if (req.user && req.user.userId) {
-    console.log(`Logged in as: ${req.user.firstName || req.user.email} (${req.user.userType})`);
-  } else {
-    console.log('Not logged in');
-  }
-  next();
-});
 
+
+
+
+// Set res.locals.url early for all views
 app.use((req, res, next) => {
   res.locals.url = req.path;
-  // Make user info available to all views
-  res.locals.user = req.user || null;
   next();
 });
 
@@ -46,16 +41,24 @@ mongoose.promise = global.promise;
 mongoose.connection.on('error', (error) => console.error(error.message));
 
 
+
 app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+// express.json and express.urlencoded already used above
 app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 // JWT authentication middleware (attach req.user)
 app.use(authenticateJWT);
 
-// Print login status for every request
+// Expose user and JWT token to all views (after JWT is attached)
+app.use((req, res, next) => {
+  res.locals.user = req.user || null;
+  res.locals.jwtToken = req.cookies.token || null;
+  next();
+});
+
+// Print login status for every request (after JWT middleware)
 app.use((req, res, next) => {
   if (req.user && req.user.userId) {
     console.log(`Logged in as: ${req.user.firstName || req.user.email} (${req.user.userType})`);

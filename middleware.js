@@ -26,7 +26,7 @@ function isLoggedIn(req, res, next) {
 }
 
 // Middleware to check if user is admin
-function isAdmin(req, res, next) {
+function isLabTech(req, res, next) {
     if (req.user && (req.user.userType === 'Admin' || req.user.userType === 'Lab Technician')) {
         return next();
     }
@@ -36,5 +36,5 @@ function isAdmin(req, res, next) {
 module.exports = {
     authenticateJWT,
     isLoggedIn,
-    isAdmin
+    isLabTech
 };

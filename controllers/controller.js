@@ -1,7 +1,6 @@
 const schemas = require('../models/schemas');
 const Reservations = schemas.reservations;
 const Profile = schemas.profile;
-const ErrorLog = schemas.errorLog;
 
 // For Cloudinary usage of pictures from cloud
 const cloudinary = require('cloudinary');
@@ -10,27 +9,6 @@ const multer = require('multer');
 const storage = multer.diskStorage({});
 
 const upload = multer({ storage });
-
-const logErrorToDb = async (error, req = null) => {
-    try {
-        const errorLog = new ErrorLog({
-            errorMessage: error.message,
-            errorStack: error.stack,
-            errorCode: error.status || 500,
-            path: req ? req.path : '',
-            method: req ? req.method : '',
-            additionalInfo: {
-                query: req ? req.query : {},
-                body: req ? req.body : {},
-                params: req ? req.params : {}
-            }
-        });
-        await errorLog.save();
-    } catch (logError) {
-        console.error('Error while logging error to database:', logError);
-    }
-};
-
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_NAME,
@@ -86,7 +64,6 @@ exports.reservePagePost = async (req, res) => {
             bookingId: newReservation._id  // Add this line
         });
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Reservation creation error:', error);
         res.status(400).json({
             success: false,
@@ -119,7 +96,6 @@ exports.confirmationPageGet = async (req, res) => {
         // Render confirmation page with reservation data
         res.render('confirmation', { reservation });
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Error fetching reservation:', error);
         res.status(500).render('error', { 
             error: 'Error retrieving reservation details' 
@@ -174,14 +150,14 @@ exports.loginPagePost = async (req, res, next) => {
                 firstName: user.firstName
             },
             JWT_SECRET,
-            { expiresIn: '2h' }
+            { expiresIn: '1d' }
         );
 
-        // Set JWT as HTTP-only cookie
+        // Set JWT as HTTP-only cookie (1 day)
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 2 * 60 * 60 * 1000 // 2 hours
+            maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
         // Optionally update lastLogin
         // user.lastLogin = new Date();
@@ -195,7 +171,6 @@ exports.loginPagePost = async (req, res, next) => {
         }
 
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Login error:', error);
         res.render('log_in', {
             error: 'An error occurred during login',
@@ -204,7 +179,15 @@ exports.loginPagePost = async (req, res, next) => {
     }
 };
 
-
+exports.logOut = (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+  res.redirect('/');
+};
 exports.signupPageGet = (req,res) => {
     res.render('sign_up');
 }
@@ -247,7 +230,6 @@ exports.signupPagePost = async (req, res, next) => {
         await newProfile.save();
         res.redirect('/log-in');
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Signup error:', error);
         res.render('sign_up', {
             error: 'Error creating account. Please try again.'
@@ -293,8 +275,7 @@ exports.getReservations = async (req, res) => {
       reservations
     });
   } catch (error) {
-      await logErrorToDb(error, req);
-      console.error('Error fetching reservations:', error);
+    console.error('Error fetching reservations:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch reservations'
@@ -333,7 +314,6 @@ exports.UserGet = async (req, res) => {
                 .sort({ reservationDate: -1 }) // Sort by most recent
                 .limit(10); // Limit to recent 10 reservations
         } catch (reservationError) {
-            await logErrorToDb(error, req);
             console.log('No reservations found or Reservation model not available:', reservationError.message);
             // Continue without reservations if model doesn't exist
         }
@@ -367,7 +347,6 @@ exports.UserGet = async (req, res) => {
         });
 
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Error fetching user profile:', error);
         res.status(500).render('error', {
             message: 'Error loading user profile',
@@ -397,7 +376,6 @@ exports.UsersSearchGet = async (req, res) => {
             resultsCount: profiles.length
         });
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Error searching profiles:', error);
         res.status(500).render('error', {
             message: 'Error searching profiles',
@@ -427,7 +405,6 @@ exports.adminEditReserve = async (req,res) => {
         });
         
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Error fetching reservation:', error);
         res.status(500).render('error.pug', { 
             message: 'Server error' 
@@ -474,7 +451,6 @@ exports.adminEditUpdate = async (req, res) => {
         });
         
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Error updating reservation:', error);
         
         // Handle validation errors
@@ -501,7 +477,6 @@ exports.adminEditPageGet = async (req, res) => {
         
         res.render('admin_edit_delete_reservation', { reservations });
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Error fetching reservations:', error);
         res.status(500).render('error', { 
             error: 'Error loading reservations' 
@@ -538,7 +513,6 @@ exports.adminDelete = async (req, res) => {
         });
         
     } catch (error) {
-        await logErrorToDb(error, req);
         console.error('Error deleting reservation:', error);
         res.status(500).json({
             success: false,

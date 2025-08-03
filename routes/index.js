@@ -1,4 +1,5 @@
-const { isLoggedIn, isAdmin } = require('../middleware');
+
+const { isLoggedIn, isLabTech } = require('../middleware');
 const express = require('express');
 const router = express.Router();
 
@@ -15,19 +16,20 @@ router.get('/confirmation/:id', controller.confirmationPageGet);
 router.get('/about', controller.aboutPageGet);
 router.get('/log-in', controller.loginPageGet);
 router.post('/log-in', controller.loginPagePost);
+router.get('/log-out', controller.logOut);
 router.get('/sign-up', controller.signupPageGet);
 router.post('/sign-up', controller.signupPagePost);
 
 // Search and view users
-router.get('/search/:search_term', controller.UsersSearchGet);
-router.get('/user/:id', controller.UserGet);
+router.get('/search/:search_term', isLoggedIn, controller.UsersSearchGet);
+router.get('/user/:id',  isLoggedIn, controller.UserGet);
 
 // Admin-only routes
-router.get('/admin', isLoggedIn, isAdmin, controller.adminPageGet);
-router.get('/admin/add', isLoggedIn, isAdmin, controller.reservePageGet);
-router.get('/admin/edit', isLoggedIn, isAdmin, controller.adminEditPageGet);
-router.get('/admin/edit/:id', isLoggedIn, isAdmin, controller.adminEditReserve);
-router.put('/admin/edit/:id', isLoggedIn, isAdmin, controller.adminEditUpdate);
-router.delete('/admin/delete/:id', isLoggedIn, isAdmin, controller.adminDelete);
+router.get('/admin', isLoggedIn, isLabTech, controller.adminPageGet);   
+router.get('/admin/add', isLoggedIn, isLabTech, controller.reservePageGet);
+router.get('/admin/edit', isLoggedIn, isLabTech, controller.adminEditPageGet);
+router.get('/admin/edit/:id', isLoggedIn, isLabTech, controller.adminEditReserve);
+router.put('/admin/edit/:id', isLoggedIn, isLabTech, controller.adminEditUpdate);
+router.delete('/admin/delete/:id', isLoggedIn, isLabTech, controller.adminDelete);
 
 module.exports = router;
