@@ -19,7 +19,7 @@ cloudinary.config({
 exports.upload = upload.single("image");
 
 exports.pushToCloudinary = (req, res, next) => {
-    if(req.file) {
+    if (req.file) {
         cloudinary.uploader.upload(req.file.path)
             .then((result) => {
                 req.body.image = result.public_id;
@@ -29,7 +29,7 @@ exports.pushToCloudinary = (req, res, next) => {
         next();
     }
 }
-exports.reservePageGet = (req,res) => {
+exports.reservePageGet = (req, res) => {
     res.render('index');
 }
 
@@ -60,7 +60,7 @@ exports.reservePagePost = async (req, res) => {
         });
 
         await newReservation.save();
-        
+
         // Send JSON response with booking ID
         res.status(200).json({
             success: true,
@@ -80,38 +80,38 @@ exports.reservePagePost = async (req, res) => {
 exports.confirmationPageGet = async (req, res) => {
     try {
         const bookingId = req.params.id;
-        
+
         // Validate MongoDB ObjectId format
         if (!bookingId.match(/^[0-9a-fA-F]{24}$/)) {
-            return res.status(400).render('error', { 
-                error: 'Invalid booking ID format' 
+            return res.status(400).render('error', {
+                error: 'Invalid booking ID format'
             });
         }
-        
+
         // Find the reservation in database and populate user
         const reservation = await Reservations.findById(bookingId).populate({ path: 'user', model: 'Profile' });
-        
+
         if (!reservation) {
-            return res.status(404).render('error', { 
-                error: 'Reservation not found' 
+            return res.status(404).render('error', {
+                error: 'Reservation not found'
             });
         }
-        
+
         // Render confirmation page with reservation data
         res.render('confirmation', { reservation });
     } catch (error) {
         console.error('Error fetching reservation:', error);
-        res.status(500).render('error', { 
-            error: 'Error retrieving reservation details' 
+        res.status(500).render('error', {
+            error: 'Error retrieving reservation details'
         });
     }
 };
 
-exports.aboutPageGet = (req,res) => {
+exports.aboutPageGet = (req, res) => {
     res.render('about');
 }
 
-exports.loginPageGet = (req,res) => {
+exports.loginPageGet = (req, res) => {
     res.render('log_in');
 }
 
@@ -119,7 +119,7 @@ exports.loginPageGet = (req,res) => {
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
-exports.loginPagePost = async (req, res, next) => { 
+exports.loginPagePost = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
@@ -184,15 +184,15 @@ exports.loginPagePost = async (req, res, next) => {
 };
 
 exports.logOut = (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-  });
-  res.redirect('/');
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+    });
+    res.redirect('/');
 };
-exports.signupPageGet = (req,res) => {
+exports.signupPageGet = (req, res) => {
     res.render('sign_up');
 }
 
@@ -217,7 +217,7 @@ exports.signupPagePost = async (req, res, next) => {
         //const saltRounds = 12;
         //const salt = await bcrypt.genSalt(saltRounds);
         //const hashedPassword = await bcrypt.hash(password, salt);
-        
+
         // Create new user profile
         const newProfile = new Profile({
             firstName,
@@ -230,7 +230,7 @@ exports.signupPagePost = async (req, res, next) => {
             img: '',
             bio: ''
         });
-        
+
         await newProfile.save();
         res.redirect('/log-in');
     } catch (error) {
@@ -244,52 +244,52 @@ exports.signupPagePost = async (req, res, next) => {
 
 
 exports.getReservations = async (req, res) => {
-  try {
-    const { lab, resDateStart } = req.query;
-    let query = {};
-   
-    if (lab) query.lab = lab;
-   
-    if (resDateStart) {
-      // Parse the date (this will be interpreted as local date)
-      const localDate = new Date(resDateStart);
-      
-      // For UTC+8, we need to find the UTC range that corresponds to the full day in UTC+8
-      // Start of day in UTC+8 = subtract 8 hours from UTC
-      const startDate = new Date(localDate);
-      startDate.setUTCHours(0 - 8, 0, 0, 0); // This gives us 16:00 UTC of previous day
-      
-      // End of day in UTC+8 = start of next day minus 8 hours
-      const endDate = new Date(localDate);
-      endDate.setUTCDate(localDate.getUTCDate() + 1);
-      endDate.setUTCHours(0 - 8, 0, 0, 0); // This gives us 16:00 UTC of the same day
-      
-      console.log(`Searching for reservations on ${resDateStart} (UTC+8)`);
-      console.log(`UTC range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-      
-      query['resDate.start'] = {
-        $gte: startDate,
-        $lt: endDate
-      };
+    try {
+        const { lab, resDateStart } = req.query;
+        let query = {};
+
+        if (lab) query.lab = lab;
+
+        if (resDateStart) {
+            // Parse the date (this will be interpreted as local date)
+            const localDate = new Date(resDateStart);
+
+            // For UTC+8, we need to find the UTC range that corresponds to the full day in UTC+8
+            // Start of day in UTC+8 = subtract 8 hours from UTC
+            const startDate = new Date(localDate);
+            startDate.setUTCHours(0 - 8, 0, 0, 0); // This gives us 16:00 UTC of previous day
+
+            // End of day in UTC+8 = start of next day minus 8 hours
+            const endDate = new Date(localDate);
+            endDate.setUTCDate(localDate.getUTCDate() + 1);
+            endDate.setUTCHours(0 - 8, 0, 0, 0); // This gives us 16:00 UTC of the same day
+
+            console.log(`Searching for reservations on ${resDateStart} (UTC+8)`);
+            console.log(`UTC range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+            query['resDate.start'] = {
+                $gte: startDate,
+                $lt: endDate
+            };
+        }
+
+        const reservations = await Reservations.find(query).populate({ path: 'user', model: 'Profile' }).lean();
+        res.json({
+            success: true,
+            reservations
+        });
+    } catch (error) {
+        console.error('Error fetching reservations:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch reservations'
+        });
     }
-   
-    const reservations = await Reservations.find(query).populate({ path: 'user', model: 'Profile' }).lean();
-    res.json({
-      success: true,
-      reservations
-    });
-  } catch (error) {
-    console.error('Error fetching reservations:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch reservations'
-    });
-  }
 };
 exports.UserGet = async (req, res) => {
     try {
         const userId = req.params.id;
-        
+
         // Validate if the ID is a valid MongoDB ObjectId
         if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
             return res.status(400).render('error', {
@@ -300,7 +300,7 @@ exports.UserGet = async (req, res) => {
 
         // Find the user profile by ID, excluding sensitive fields
         const userProfile = await Profile.findById(userId).select('-hashedPassword -salt');
-        
+
         if (!userProfile) {
             return res.status(404).render('error', {
                 message: 'User profile not found',
@@ -360,7 +360,7 @@ exports.UserGet = async (req, res) => {
 };
 exports.UsersSearchGet = async (req, res) => {
     try {
-        const searchTerm = req.params.search_term;        
+        const searchTerm = req.params.search_term;
         // Rest of your code remains the same...
         const searchQuery = {
             $or: [
@@ -370,9 +370,9 @@ exports.UsersSearchGet = async (req, res) => {
                 { type: { $regex: searchTerm, $options: 'i' } },
             ]
         };
-        
+
         const profiles = await Profile.find(searchQuery).select('-hashedPassword -salt');
-        
+
         res.render('search_users_results', {
             title: `Search Results for "${searchTerm}"`,
             profiles: profiles,
@@ -387,31 +387,31 @@ exports.UsersSearchGet = async (req, res) => {
         });
     }
 }
-exports.adminPageGet = (req,res) => {
+exports.adminPageGet = (req, res) => {
     res.render('admin');
 }
 
-exports.adminEditReserve = async (req,res) => {
+exports.adminEditReserve = async (req, res) => {
     try {
         const reservationId = req.params.id;
-        
+
         // Replace 'Reservation' with your actual model/collection name
         const reservation = await Reservations.findById(reservationId);
-        
+
         if (!reservation) {
-            return res.status(404).render('error.pug', { 
-                message: 'Reservation not found' 
+            return res.status(404).render('error.pug', {
+                message: 'Reservation not found'
             });
         }
-        
-        res.render('edit.pug', { 
-            reservation: reservation 
+
+        res.render('edit.pug', {
+            reservation: reservation
         });
-        
+
     } catch (error) {
         console.error('Error fetching reservation:', error);
-        res.status(500).render('error.pug', { 
-            message: 'Server error' 
+        res.status(500).render('error.pug', {
+            message: 'Server error'
         });
     }
 }
@@ -420,7 +420,7 @@ exports.adminEditUpdate = async (req, res) => {
     try {
         const reservationId = req.params.id;
         const updatedReservation = req.body.reservation;
-        
+
         // Validate that reservation data exists
         if (!updatedReservation) {
             return res.status(400).json({
@@ -428,35 +428,35 @@ exports.adminEditUpdate = async (req, res) => {
                 error: 'No reservation data provided'
             });
         }
-        
+
         // Find and update the reservation
         // Replace 'Reservation' with your actual model name
         const reservation = await Reservations.findByIdAndUpdate(
             reservationId,
             updatedReservation,
-            { 
+            {
                 new: true,           // Return the updated document
                 runValidators: true  // Run schema validations
             }
         );
-        
+
         if (!reservation) {
             return res.status(404).json({
                 success: false,
                 error: 'Reservation not found'
             });
         }
-        
+
         // Return success response
         res.json({
             success: true,
             message: 'Reservation updated successfully',
             reservation: reservation
         });
-        
+
     } catch (error) {
         console.error('Error updating reservation:', error);
-        
+
         // Handle validation errors
         if (error.name === 'ValidationError') {
             return res.status(400).json({
@@ -464,7 +464,7 @@ exports.adminEditUpdate = async (req, res) => {
                 error: 'Validation failed: ' + error.message
             });
         }
-        
+
         // Handle other errors
         res.status(500).json({
             success: false,
@@ -478,19 +478,19 @@ exports.adminEditPageGet = async (req, res) => {
         const reservations = await Reservations.find({})
             .populate({ path: 'user', model: 'Profile' }) // Use correct model name as registered
             .sort({ reqDate: -1 }); // Sort by request date, newest first
-        
+
         res.render('admin_edit_delete_reservation', { reservations });
     } catch (error) {
         console.error('Error fetching reservations:', error);
-        res.status(500).render('error', { 
-            error: 'Error loading reservations' 
+        res.status(500).render('error', {
+            error: 'Error loading reservations'
         });
     }
 };
 exports.adminDelete = async (req, res) => {
     try {
         const reservationId = req.params.id;
-        
+
         // Validate MongoDB ObjectId format
         if (!reservationId.match(/^[0-9a-fA-F]{24}$/)) {
             return res.status(400).json({
@@ -498,24 +498,24 @@ exports.adminDelete = async (req, res) => {
                 error: 'Invalid reservation ID format'
             });
         }
-        
+
         // Find and delete the reservation
         const deletedReservation = await Reservations.findByIdAndDelete(reservationId);
-        
+
         if (!deletedReservation) {
             return res.status(404).json({
                 success: false,
                 error: 'Reservation not found'
             });
         }
-        
+
         // Return success response
         res.json({
             success: true,
             message: 'Reservation deleted successfully',
             deletedId: reservationId
         });
-        
+
     } catch (error) {
         console.error('Error deleting reservation:', error);
         res.status(500).json({
@@ -605,34 +605,7 @@ exports.editProfile = async (req, res) => {
 
 };
 
-exports.deleteProfile = async (req, res) => {
 
-
-    try {
-
-
-        await Profile.findByIdAndDelete(req.params.id);
-
-
-        req.session.destroy(); // if using sessions
-
-
-        res.redirect("/sign-up"); // or home page
-
-
-    } catch (error) {
-
-
-        console.error("Error deleting profile:", error);
-
-
-        res.status(500).send("Error deleting profile.");
-
-
-    }
-
-
-};
 // Delete user by MongoDB _id (ObjectId) passed as :id in the route
 exports.UserDelete = async (req, res) => {
     try {

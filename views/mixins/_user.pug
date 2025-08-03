@@ -32,9 +32,25 @@ mixin logged_profile_display(profile, reservations)
                     img(src="https://img.icons8.com/ios-filled/24/000000/linkedin.png")
           // Right Side (Buttons)
           .right-buttons
-            button.btn.profile-btn Change Picture
-            button.btn.profile-btn Edit Profile
-            button.btn.profile-btn Delete Profile
+            button.btn.profile-btn(onclick="toggleForm('edit-profile-form')") Edit Profile
+            // Edit Forms Section
+            .edit-forms-section
+            // Edit Profile Form
+            .edit-form-container
+              form#edit-profile-form.hidden-form(method="POST", action=`/user/edit/${profile._id}`)
+                h3.edit-form-title Edit Profile
+                .form-group
+                  label First Name:  
+                  input(type="text", name="firstName", value=profile.firstName, required)
+                .form-group
+                  label Last Name:  
+                  input(type="text", name="lastName", value=profile.lastName, required)
+                .form-group
+                  label Biography:  
+                  textarea(name="biography", rows="4")= profile.biography
+                .form-actions
+                  button(type="submit").btn.btn-primary Save Changes
+                  button(type="button" onclick="toggleForm('')").btn.btn-secondary Cancel
     // Reservation Sidebar
     aside.sidebar
       .notif-box
@@ -46,7 +62,109 @@ mixin logged_profile_display(profile, reservations)
               button.btn.notif-btn= reservation.name || `Reservation ${reservation.id}`
           else
             button.btn.notif-btn No reservations found
-
+      style.
+        .edit-forms-section {
+          margin-top: 20px;
+          width: 100%;
+        }
+        .edit-form-container {
+          border-radius: 8px;
+          padding: 20px;
+        }
+        .reservation-list {
+          margin-top: 15px;
+          max-height: 500px;
+          overflow-y: auto;
+        }
+        .reservation-item {
+          background: #fff;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          margin-bottom: 10px;
+          padding: 12px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .reservation-header {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        }
+        .reservation-lab {
+          font-weight: bold;
+          color: #11414E;
+        }
+        .reservation-seat {
+          background: #FAEECF;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 0.9em;
+        }
+        .reservation-time {
+          display: flex;
+          flex-direction: column;
+          font-size: 0.9em;
+          color: #666;
+        }
+        .reservation-date {
+          margin-bottom: 4px;
+        }
+        .reservation-hours {
+          color: #11414E;
+        }
+        .reservation-students {
+          margin-top: 8px;
+          font-size: 0.85em;
+          color: #666;
+          border-top: 1px solid #eee;
+          padding-top: 8px;
+        }
+        .no-reservations {
+          text-align: center;
+          color: #666;
+          padding: 20px;
+          font-style: italic;
+        }
+        .edit-form-title {
+          color: #11414E;
+          margin-bottom: 20px;
+          font-size: 1.5em;
+        }
+        .form-group {
+          margin-bottom: 15px;
+        }
+        .form-group label {
+          display: block;
+          margin-bottom: 5px;
+          color: #11414E;
+        }
+        .form-group input,
+        .form-group textarea {
+          width: 100%;
+          padding: 8px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          background: white;
+        }
+        .form-actions {
+          display: flex;
+          gap: 10px;
+          margin-top: 20px;
+        }
+        .btn-secondary {
+          background: #6c757d;
+          color: white;
+        }
+        .hidden-form {
+          display: none;
+        }
+      script.
+        function toggleForm(id) {
+          document.querySelectorAll('.hidden-form').forEach(f => f.style.display = 'none');
+          const form = document.getElementById(id);
+          if (form) {
+            form.style.display = 'block';
+          }
+        }
 mixin logged_out_profile_display(profile, reservations)
   .container-profile.container-fluid
     main.main-profile
@@ -86,10 +204,18 @@ mixin logged_out_profile_display(profile, reservations)
     aside.sidebar
       .notif-box
         h2 Reservations
-        a.order-by(href="#") Order By ⇅
         .reservation-list
           if reservations && reservations.length > 0
             each reservation in reservations
-              button.btn.notif-btn= reservation.name || `Reservation ${reservation.id}`
+              .reservation-item
+                .reservation-header
+                  span.reservation-lab= reservation.lab
+                  span.reservation-seat= reservation.seat
+                .reservation-time
+                  span.reservation-date= new Date(reservation.resDate.start).toLocaleDateString()
+                  span.reservation-hours= `${new Date(reservation.resDate.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(reservation.resDate.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
+                if reservation.reservedStud
+                  .reservation-students
+                    span.student-count= `${reservation.reservedStud} students`
           else
-            button.btn.notif-btn No reservations found
+          .no-reservations No reservations found
