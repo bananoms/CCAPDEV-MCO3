@@ -43,6 +43,58 @@ mixin scriptBlock(reservation)
     let originalReservation = reservationData;
     let editableReservationId = reservationData._id;
     
+    // Tooltip functions (copied from _reservation_form.pug)
+    function showReservationTooltipEdit(e) {
+      let info = {};
+      try {
+        info = JSON.parse(e.currentTarget.dataset.reservationInfo);
+      } catch {}
+      let tooltip = document.getElementById('reservation-tooltip');
+      if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'reservation-tooltip';
+        tooltip.style.position = 'fixed';
+        tooltip.style.zIndex = 9999;
+        tooltip.style.pointerEvents = 'none';
+        tooltip.style.background = '#FAEECF';
+        tooltip.style.border = '1px solid #11414E';
+        tooltip.style.color = '#11414E';
+        tooltip.style.padding = '10px 16px';
+        tooltip.style.borderRadius = '8px';
+        tooltip.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+        tooltip.style.fontSize = '15px';
+        document.body.appendChild(tooltip);
+      }
+      let userFullName = 'N/A';
+      if (info.anon) {
+        userFullName = 'Anonymous';
+      } else if (info.user && typeof info.user === 'object') {
+        userFullName = info.user.firstName + ' ' + info.user.lastName;
+      }
+      tooltip.innerHTML =
+        `<strong>Seat:</strong> ${info.seat || ''}<br>` +
+        `<strong>Lab:</strong> ${info.lab || ''}<br>` +
+        `<strong>Request Date:</strong> ${info.reqDate ? new Date(info.reqDate).toLocaleString() : ''}<br>` +
+        `<strong>Reservation:</strong> ${info.resStart ? new Date(info.resStart).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''} - ${info.resEnd ? new Date(info.resEnd).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}<br>` +
+        `<strong>User:</strong> ${userFullName}<br>` +
+        (info.reservedStud ? `<strong>Students:</strong> ${info.reservedStud}<br>` : '');
+      // Position tooltip near mouse
+      function moveTooltip(ev) {
+        tooltip.style.left = (ev.clientX + 16) + 'px';
+        tooltip.style.top = (ev.clientY + 16) + 'px';
+      }
+      moveTooltip(e);
+      document.addEventListener('mousemove', moveTooltip);
+      e.currentTarget._moveTooltip = moveTooltip;
+    }
+    function hideReservationTooltipEdit(e) {
+      const tooltip = document.getElementById('reservation-tooltip');
+      if (tooltip) tooltip.remove();
+      if (e.currentTarget._moveTooltip) {
+        document.removeEventListener('mousemove', e.currentTarget._moveTooltip);
+        delete e.currentTarget._moveTooltip;
+      }
+    }
     function formatDateEdit(dateString) {
       const date = new Date(dateString);
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -366,10 +418,25 @@ mixin scriptBlock(reservation)
         const reservations = await fetchReservationsEdit(currentLab, dateInput);
         
         // Clear all previous markings
+        // Remove existing tooltip
+        const existingTooltip = document.getElementById('reservation-tooltip');
+        if (existingTooltip) {
+          existingTooltip.remove();
+        }
+
         const allCells = document.querySelectorAll('td[data-row]');
         if (allCells && allCells.length > 0) {
           allCells.forEach(cell => {
             cell.classList.remove('reserved', 'editable');
+            cell.removeAttribute('data-reservation-info');
+            const clone = cell.cloneNode(true);
+            // Re-attach the click events since cloning doesn't copy them
+            clone.addEventListener('click', function() { selectCellEdit(this); });
+            clone.addEventListener("contextmenu", (event) => {
+              event.preventDefault();
+              deselectCellEdit(event.currentTarget);
+            });
+            cell.parentNode.replaceChild(clone, cell);
           });
         }
         
@@ -384,17 +451,28 @@ mixin scriptBlock(reservation)
           const seatRowNumber = getSeatRowNumberEdit(reservation.seat);
           const startSlot = timeToSlotIndexEdit(reservation.resDate.start);
           const endSlot = timeToSlotIndexEdit(reservation.resDate.end) - 1;
-          
           // Mark all slots from start to end
           for (let slot = startSlot; slot <= endSlot; slot++) {
             const cell = document.querySelector(`td[data-row="${seatRowNumber}"][data-col="${slot}"]`);
             if (cell) {
               cell.classList.add('reserved');
-              
               // If this is the reservation being edited, also mark as editable
               if (reservation._id === editableReservationId || reservation.id === editableReservationId) {
                 cell.classList.add('editable');
               }
+              // Attach tooltip info
+              cell.dataset.reservationInfo = JSON.stringify({
+                seat: reservation.seat,
+                lab: reservation.lab,
+                reqDate: reservation.reqDate,
+                resStart: reservation.resDate.start,
+                resEnd: reservation.resDate.end,
+                user: reservation.user,
+                anon: reservation.anon,
+                reservedStud: reservation.reservedStud
+              });
+              cell.addEventListener('mouseenter', showReservationTooltipEdit);
+              cell.addEventListener('mouseleave', hideReservationTooltipEdit);
             }
           }
         });

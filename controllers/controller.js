@@ -39,11 +39,14 @@ exports.reservePagePost = async (req, res) => {
         if (!req.body.reservation) {
             throw new Error('Invalid request format: missing reservation data');
         }
-        const { seat, lab, reqDate, resDate, anon } = req.body.reservation;
+        const { seat, lab, reqDate, resDate, anon, user } = req.body.reservation;
         if (!seat) throw new Error('Seat is required');
         if (!lab) throw new Error('Lab is required');
         if (!resDate || !resDate.start || !resDate.end) throw new Error('Valid reservation dates are required');
-        
+
+        // Use user from JWT if available, else from request body (fallback)
+        let userId = req.user && req.user.userId ? req.user.userId : user;
+
         const newReservation = new Reservations({
             seat: seat,
             lab: lab,
@@ -52,9 +55,10 @@ exports.reservePagePost = async (req, res) => {
                 start: new Date(resDate.start),
                 end: new Date(resDate.end)
             },
-            anon: anon || false,
+            anon: false,
+            user: userId
         });
-        
+
         await newReservation.save();
         
         // Send JSON response with booking ID
@@ -84,8 +88,8 @@ exports.confirmationPageGet = async (req, res) => {
             });
         }
         
-        // Find the reservation in database
-        const reservation = await Reservations.findById(bookingId);
+        // Find the reservation in database and populate user
+        const reservation = await Reservations.findById(bookingId).populate({ path: 'user', model: 'Profile' });
         
         if (!reservation) {
             return res.status(404).render('error', { 
@@ -269,7 +273,7 @@ exports.getReservations = async (req, res) => {
       };
     }
    
-    const reservations = await Reservations.find(query).lean();
+    const reservations = await Reservations.find(query).populate({ path: 'user', model: 'Profile' }).lean();
     res.json({
       success: true,
       reservations
@@ -472,7 +476,7 @@ exports.adminEditPageGet = async (req, res) => {
     try {
         // Fetch all reservations from database
         const reservations = await Reservations.find({})
-            .populate('user') // If you have user references
+            .populate({ path: 'user', model: 'Profile' }) // Use correct model name as registered
             .sort({ reqDate: -1 }); // Sort by request date, newest first
         
         res.render('admin_edit_delete_reservation', { reservations });
@@ -535,7 +539,100 @@ exports.adminUsers = async (req, res) => {
         });
     }
 };
+exports.editProfile = async (req, res) => {
 
+
+
+    try {
+
+
+        const { firstName, lastName, biography } = req.body;
+
+
+        const updateFields = {
+
+
+            firstName,
+
+
+            lastName,
+
+
+            biography,
+
+
+        };
+
+
+
+
+
+        // Handle optional image upload (Cloudinary)
+
+
+        if (req.file) {
+
+
+            const result = await cloudinary.uploader.upload(req.file.path);
+
+
+            updateFields.img = result.public_id;
+
+
+        }
+
+
+
+
+
+        await Profile.findByIdAndUpdate(req.params.id, updateFields);
+
+
+        res.redirect(`/user/${req.params.id}`);
+
+
+    } catch (error) {
+
+
+        console.error("Error editing profile:", error);
+
+
+        res.status(500).send("Error updating profile.");
+
+
+    }
+
+
+};
+
+exports.deleteProfile = async (req, res) => {
+
+
+    try {
+
+
+        await Profile.findByIdAndDelete(req.params.id);
+
+
+        req.session.destroy(); // if using sessions
+
+
+        res.redirect("/sign-up"); // or home page
+
+
+    } catch (error) {
+
+
+        console.error("Error deleting profile:", error);
+
+
+        res.status(500).send("Error deleting profile.");
+
+
+    }
+
+
+};
 // Delete user by MongoDB _id (ObjectId) passed as :id in the route
 exports.UserDelete = async (req, res) => {
     try {

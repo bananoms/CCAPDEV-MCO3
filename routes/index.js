@@ -8,7 +8,7 @@ const controller = require('../controllers/controller');
 
 // Public routes
 router.get('/', controller.reservePageGet);
-router.post('/', controller.reservePagePost); // only students can reserve
+router.post('/', controller.reservePagePost);
 
 router.get('/api/reservations/', controller.getReservations); // reservation API (can be public or protected)
 

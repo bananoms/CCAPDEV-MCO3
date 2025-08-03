@@ -498,11 +498,26 @@ mixin scriptBlock()
           // Pass the date string directly - let the backend handle the UTC+8 conversion
           const reservations = await fetchReservations(currentLab, dateInput);
           
-          // Clear all previous reservations
+          // Remove existing tooltip
+          const existingTooltip = document.getElementById('reservation-tooltip');
+          if (existingTooltip) {
+            existingTooltip.remove();
+          }
+
+          // Reset all cells to base state
           const allCells = document.querySelectorAll('td[data-row]');
           if (allCells && allCells.length > 0) {
             allCells.forEach(cell => {
               cell.classList.remove('reserved');
+              cell.removeAttribute('data-reservation-info');
+              const clone = cell.cloneNode(true);
+              // Re-attach the click events since cloning doesn't copy them
+              clone.addEventListener('click', function() { selectCell(this); });
+              clone.addEventListener("contextmenu", (event) => {
+                event.preventDefault();
+                deselectCell(event.currentTarget);
+              });
+              cell.parentNode.replaceChild(clone, cell);
             });
           }
           
@@ -526,21 +541,27 @@ mixin scriptBlock()
               resStart: reservation.resDate.start,
               resEnd: reservation.resDate.end,
               anon: reservation.anon,
-              user: reservation.user && reservation.user.username ? reservation.user.username : 'N/A',
+              user: reservation.user ? {
+                firstName: reservation.user.firstName || '',
+                lastName: reservation.user.lastName || ''
+              } : null,
               reservedStud: reservation.reservedStud
             };
             for (let slot = startSlot; slot <= endSlot; slot++) {
               const cell = document.querySelector(`td[data-row="${seatRowNumber}"][data-col="${slot}"]`);
               if (cell) {
-                cell.classList.add('reserved');
-                // Attach reservation info as data attributes
-                cell.dataset.reservationInfo = JSON.stringify(info);
-                // Add hover listeners if not already present
-                if (!cell.dataset.tooltipBound) {
-                  cell.addEventListener('mouseenter', showReservationTooltip);
-                  cell.addEventListener('mouseleave', hideReservationTooltip);
-                  cell.dataset.tooltipBound = 'true';
-                }
+                const newCell = cell.cloneNode(true);
+                // Re-attach all event listeners
+                newCell.addEventListener('click', function() { selectCell(this); });
+                newCell.addEventListener("contextmenu", (event) => {
+                  event.preventDefault();
+                  deselectCell(event.currentTarget);
+                });
+                newCell.classList.add('reserved');
+                newCell.dataset.reservationInfo = JSON.stringify(info);
+                newCell.addEventListener('mouseenter', showReservationTooltip);
+                newCell.addEventListener('mouseleave', hideReservationTooltip);
+                cell.parentNode.replaceChild(newCell, cell);
               }
             }
           });
@@ -566,12 +587,18 @@ mixin scriptBlock()
         tooltip.style.fontSize = '15px';
         document.body.appendChild(tooltip);
       }
+      let userFullName = 'N/A';
+      if (info.anon) {
+        userFullName = 'Anonymous';
+      } else if (info.user && typeof info.user === 'object') {
+        userFullName = info.user.firstName + ' ' + info.user.lastName;
+      }
       tooltip.innerHTML =
         `<strong>Seat:</strong> ${info.seat || ''}<br>` +
         `<strong>Lab:</strong> ${info.lab || ''}<br>` +
         `<strong>Request Date:</strong> ${info.reqDate ? new Date(info.reqDate).toLocaleString() : ''}<br>` +
         `<strong>Reservation:</strong> ${info.resStart ? new Date(info.resStart).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''} - ${info.resEnd ? new Date(info.resEnd).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}<br>` +
-        `<strong>User:</strong> ${info.anon ? 'Anonymous' : (info.user || 'N/A')}<br>` +
+        `<strong>User:</strong> ${userFullName}<br>` +
         (info.reservedStud ? `<strong>Students:</strong> ${info.reservedStud}<br>` : '');
       // Position tooltip near mouse
       function moveTooltip(ev) {
@@ -611,11 +638,15 @@ mixin scriptBlock()
         // Pass the date string directly - let the backend handle the UTC+8 conversion
         const reservations = await fetchReservationsEdit(currentLab, dateInput);
         
-        // Clear all previous markings
+        // Clear all previous markings and tooltips
         const allCells = document.querySelectorAll('td[data-row]');
         if (allCells && allCells.length > 0) {
           allCells.forEach(cell => {
             cell.classList.remove('reserved', 'editable');
+            // Remove old tooltip listeners and data
+            cell.removeEventListener('mouseenter', showReservationTooltipEdit);
+            cell.removeEventListener('mouseleave', hideReservationTooltipEdit);
+            delete cell.dataset.reservationInfo;
           });
         }
         

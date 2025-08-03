@@ -32,6 +32,12 @@ html
             a.nav-link(href="/log-out") Log Out
           else
             a.nav-link(href="/log-in") Login
+
+    // Expose user object globally for all pages
+    if typeof user !== 'undefined'
+      script.
+        window.user = !#{JSON.stringify(user)} ? null : !function(){ try { return JSON.parse('#{JSON.stringify(user)}'); } catch(e) { return null; } }();
+
     block content
 
     script.

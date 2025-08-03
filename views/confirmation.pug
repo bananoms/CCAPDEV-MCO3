@@ -9,7 +9,10 @@ block content
                 span #{reservation._id}
             .detail-item
                 strong Full Name: 
-                span #{reservation.anon ? 'anon' : 'Regular User'}
+                if reservation.user && reservation.user.firstName && reservation.user.lastName
+                  span #{reservation.user.firstName} #{reservation.user.lastName}
+                else
+                  span Regular User
             .detail-item
                 strong Seat: 
                 span #{reservation.seat}
