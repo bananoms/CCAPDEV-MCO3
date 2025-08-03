@@ -27,10 +27,29 @@ const reservationsSchema = new Schema ({
     reservedStud: {type:Number}
 });
 
+const errorLogSchema = new mongoose.Schema({
+    errorMessage: {
+        type: String,
+        required: true
+    },
+    errorStack: String,
+    errorCode: Number,
+    path: String,
+    method: String,
+    timestamp: {
+        type: Date,
+        default: Date.now
+    },
+    additionalInfo: mongoose.Schema.Types.Mixed
+});
+
+
 const Profile = mongoose.model("Profile", profileSchema);
 const Reservations = mongoose.model("Reservations", reservationsSchema);
+const ErrorLog = mongoose.model("ErrorLog", errorLogSchema);
 
 module.exports = {
     profile: Profile,
-    reservations: Reservations
+    reservations: Reservations,
+    errorLog: ErrorLog
 };
