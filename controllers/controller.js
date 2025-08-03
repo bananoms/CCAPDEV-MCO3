@@ -521,5 +521,19 @@ exports.adminDelete = async (req, res) => {
     }
 };
 
+exports.adminUsers = async (req, res) => {
+    try {
+        // Fetch all users (profiles) from the database, excluding sensitive fields
+        const users = await Profile.find({}).select('-hashedPassword -salt');
+        // Pass currentUserId for hiding edit/delete on self
+        const currentUserId = req.user?.userId || null;
+        res.render('user_edit_delete_reservation', { users, currentUserId });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).render('error', {
+            error: 'Error loading users'
+        });
+    }
+};
 
 

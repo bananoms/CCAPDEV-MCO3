@@ -1,1 +1,56 @@
-// For MCO3 Implementation
+extends layout.pug
+block content
+  .container
+    h1 Manage Users
+    .user-results
+      if users && users.length > 0
+        .profiles-grid
+          each user in users
+            .profile-card
+              .profile-header
+                if user.img
+                  img.profile-avatar(src=`${user.img}`, alt="Profile Picture")
+                else
+                  .profile-avatar.default-avatar #{user.firstName ? user.firstName.charAt(0) : ''}#{user.lastName ? user.lastName.charAt(0) : ''}
+                .profile-header-info
+                  h5.profile-name #{user.firstName} #{user.lastName}
+                  small.text-muted User ID: #{user._id}
+              .profile-body
+                p
+                  strong Email:
+                  span= ' ' + user.email
+                p
+                  strong Type:
+                  span= ' ' + user.type
+              if !(currentUserId && user._id.toString() === currentUserId.toString())
+                .profile-actions.mt-2
+                  button.btn.btn-sm.btn-outline-primary.me-2(type="button", onclick=`editUser('${user._id}')`) Edit
+                  button.btn.btn-sm.btn-outline-danger(type="button", onclick=`deleteUser('${user._id}')`) Delete
+      else
+        .alert.alert-info
+          h4 No Users Found
+          p There are currently no users in the system.
+  script.
+    function editUser(id) {
+      window.location.href = `/admin/users/edit/${id}`;
+    }
+    function deleteUser(id) {
+      fetch(`/admin/users/delete/${id}` , {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          console.log('Error deleting user: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        console.log('Error deleting user');
+      });
+    }

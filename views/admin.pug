@@ -1,7 +1,7 @@
 extends layout.pug
 block content
      .content-box
-        form(action="add" method="get" style="display: inline-block;")
-            button.main-btn.admin.mt-3(type="submit") Add Reservation
-        form(action="edit" method="get" style="display: inline-block;")
-            button.main-btn.admin.mt-3(type="submit") Edit/Delete Reservations
+        a(href="/admin/add", class="main-btn admin mt-3", style="display: inline-block; text-decoration: none;") Add Reservation
+        a(href="/admin/edit", class="main-btn admin mt-3", style="display: inline-block; text-decoration: none;") Edit/Delete Reservations
+        if user && user.userType === 'Admin'
+          a(href="/admin/users", class="main-btn admin mt-3", style="display: inline-block; text-decoration: none;") Edit/Delete Users

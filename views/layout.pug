@@ -7,11 +7,19 @@ html
   body
     nav.navbar.navbar-expand-lg
       .container-fluid
-        a.navbar-brand(href="/") LabAccess
+        // Show LabAccess link to /admin for Admin/LabTech, else /
+        if user && user.userId && (user.userType === 'Admin' || user.userType === 'Lab Technician')
+          a.navbar-brand(href="/admin") LabAccess
+        else
+          a.navbar-brand(href="/") LabAccess
         form.d-md-flex.ms-auto(method="GET", action="/search", onsubmit="return handleSearch(this)")
           input.form-control.me-2.search-input(type="search", name="search_term", placeholder="Search", aria-label="Search", required)
         .d-flex
-          a.nav-link(href="/") Home
+          // Home link to /admin for Admin/LabTech, else /
+          if user && user.userId && (user.userType === 'Admin' || user.userType === 'Lab Technician')
+            a.nav-link(href="/admin") Home
+          else
+            a.nav-link(href="/") Home
           a.nav-link(href="/about") About
 
           if user && user.userId

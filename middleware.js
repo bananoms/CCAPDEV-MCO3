@@ -25,9 +25,17 @@ function isLoggedIn(req, res, next) {
     return res.redirect('/log-in');
 }
 
-// Middleware to check if user is admin
+// Middleware to check if user is admin or lab technician
 function isLabTech(req, res, next) {
     if (req.user && (req.user.userType === 'Admin' || req.user.userType === 'Lab Technician')) {
+        return next();
+    }
+    return res.status(403).render('error', { error: 'Forbidden: Admins or Lab Technicians only' });
+}
+
+// Middleware to check if user is admin
+function isAdmin(req, res, next) {
+    if (req.user && (req.user.userType === 'Admin')) {
         return next();
     }
     return res.status(403).render('error', { error: 'Forbidden: Admins only' });
@@ -36,5 +44,6 @@ function isLabTech(req, res, next) {
 module.exports = {
     authenticateJWT,
     isLoggedIn,
-    isLabTech
+    isLabTech,
+    isAdmin
 };
