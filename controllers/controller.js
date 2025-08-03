@@ -136,7 +136,10 @@ exports.loginPageGet = (req,res) => {
 }
 
 
-exports.loginPagePost = async (req, res, next) => {
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+
+exports.loginPagePost = async (req, res, next) => { 
     try {
         const { email, password } = req.body;
 
@@ -145,19 +148,16 @@ exports.loginPagePost = async (req, res, next) => {
                 error: 'Please provide both email and password'
             });
         }
-
+        // checks email
         const user = await schemas.profile.findOne({ email }).exec();
-
         if (!user) {
             return res.render('log_in', {
                 error: 'Invalid email or password',
                 email
             });
         }
-
-        const bcrypt = require('bcrypt');
-        const match = await bcrypt.compare(password, user.hashedPassword);
-
+        // Plaintext password check (not secure, for demonstration only)
+        const match = password === user.hashedPassword;
         if (!match) {
             return res.render('log_in', {
                 error: 'Invalid email or password',
@@ -165,19 +165,31 @@ exports.loginPagePost = async (req, res, next) => {
             });
         }
 
-        // ✅ Set session
-        req.session.userId = user._id;
-        req.session.userType = user.type;
+        // Generate JWT (include firstName)
+        const token = jwt.sign(
+            {
+                userId: user._id,
+                userType: user.type,
+                email: user.email,
+                firstName: user.firstName
+            },
+            JWT_SECRET,
+            { expiresIn: '2h' }
+        );
 
-        // ✅ Optionally update lastLogin
-        user.lastLogin = new Date();
-        await user.save();
+        // Set JWT as HTTP-only cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 2 * 60 * 60 * 1000 // 2 hours
+        });
+        // Optionally update lastLogin
+        // user.lastLogin = new Date();
+        // await user.save();
 
-        // ✅ Redirect based on role
-        if (user.type === 'Admin') {
+        // Redirect based on role
+        if (user.type === 'Admin' || user.type === 'Lab Technician') {
             return res.redirect('/admin');
-        } else if (user.type === 'Lab Technician') {
-            return res.redirect('/technician-dashboard'); // Create later
         } else {
             return res.redirect(`/user/${user._id}`);
         }
@@ -207,14 +219,6 @@ exports.signupPagePost = async (req, res, next) => {
                 error: 'Please use your DLSU email address (@dlsu.edu.ph)'
             });
         }
-
-        // Basic validation
-        if (password !== confirmPassword) {
-            return res.render('sign_up', {
-                error: 'Passwords do not match'
-            });
-        }
-
         // Check if user already exists
         const existingUser = await Profile.findOne({ email });
         if (existingUser) {
@@ -222,31 +226,26 @@ exports.signupPagePost = async (req, res, next) => {
                 error: 'Email already registered'
             });
         }
-
-        // Possibly for MCO3
-        // Only allow 'student' type during sign-up
-        // if (type !== 'student') {
-        //     return res.render('sign_up', {
-        //         error: 'Only student accounts can be created through sign-up'
-        //     });
-        // }
-
+        // Generate salt and hash password
+        //const saltRounds = 12;
+        //const salt = await bcrypt.genSalt(saltRounds);
+        //const hashedPassword = await bcrypt.hash(password, salt);
+        
         // Create new user profile
         const newProfile = new Profile({
             firstName,
             lastName,
             email,
-            type,
+            type: 'Student', // Default type, or get from form if you add a type selector
             hashedPassword: password,
             salt: 'dummy-salt',
             rem: false,
             img: '',
             bio: ''
         });
-
+        
         await newProfile.save();
-
-        res.redirect('/');
+        res.redirect('/log-in');
     } catch (error) {
         await logErrorToDb(error, req);
         console.error('Signup error:', error);
@@ -364,7 +363,7 @@ exports.UserGet = async (req, res) => {
                 createdAt: userProfile.createdAt
             },
             userReservations: formattedReservations,
-            currentUserId: req.session?.userId || null // For checking if viewing own profile
+            currentUserId: req.user?.userId || null // For checking if viewing own profile
         });
 
     } catch (error) {

@@ -6,16 +6,52 @@ block content
     .form-panel
       h1 Welcome Back!
       p Please Login to your Laboratory Account
-      if error
-        .alert.alert-danger= error
-      form(method="POST", action="/log-in")
+      form(method="POST", action="/log-in", onsubmit="return validateLoginForm()")
         .form-group
-          input.form-control(type="email", name="email", placeholder="Email Address", required)
+          p#login-email-error.text-danger(style="display: none; margin-bottom: 10px;") Email is required.
+          input.form-control#login-email(type="email", name="email", placeholder="Email Address", oninput="checkLoginFields()")
         .form-group
-          input.form-control(type="password", name="password", placeholder="Password", required)
+          p#login-password-error.text-danger(style="display: none; margin-bottom: 10px;") Password is required.
+          input.form-control#login-password(type="password", name="password", placeholder="Password", oninput="checkLoginFields()")
         .submit-fields.mt-3
           .button
-            button.btn.main-btn(type="submit") Login
+            button.btn.main-btn#login-submit-btn(type="submit") Login
             p.signup.mt-2
               | Don't have an account?
               a(href="/sign-up")   Sign up
+  script.
+    function checkLoginFields() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const emailError = document.getElementById('login-email-error');
+      const passwordError = document.getElementById('login-password-error');
+      const submitBtn = document.getElementById('login-submit-btn');
+      let valid = true;
+      if (email === '') {
+        emailError.style.display = 'block';
+        valid = false;
+      } else {
+        emailError.style.display = 'none';
+      }
+      if (password === '') {
+        passwordError.style.display = 'block';
+        valid = false;
+      } else {
+        passwordError.style.display = 'none';
+      }
+      submitBtn.disabled = !valid;
+    }
+    function validateLoginForm() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      let valid = true;
+      if (email === '') {
+        document.getElementById('login-email-error').style.display = 'block';
+        valid = false;
+      }
+      if (password === '') {
+        document.getElementById('login-password-error').style.display = 'block';
+        valid = false;
+      }
+      return valid;
+    }

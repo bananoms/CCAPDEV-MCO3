@@ -1,4 +1,5 @@
-const session = require('express-session');
+
+// const session = require('express-session');
 require('dotenv').config();
 var createError = require('http-errors');
 var express = require('express');
@@ -9,6 +10,7 @@ var logger = require('morgan');
 const mongoose = require('mongoose');
 
 var indexRouter = require('./routes/index');
+const { authenticateJWT } = require('./middleware');
 
 const app = express();
 
@@ -20,8 +22,21 @@ app.use(express.urlencoded({ extended: true }));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
+
+// Print login status for every request (after JWT middleware)
+app.use((req, res, next) => {
+  if (req.user && req.user.userId) {
+    console.log(`Logged in as: ${req.user.firstName || req.user.email} (${req.user.userType})`);
+  } else {
+    console.log('Not logged in');
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   res.locals.url = req.path;
+  // Make user info available to all views
+  res.locals.user = req.user || null;
   next();
 });
 
@@ -30,26 +45,28 @@ mongoose.connect(process.env.DB);
 mongoose.promise = global.promise;
 mongoose.connection.on('error', (error) => console.error(error.message));
 
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({
-  secret: 'your-secret-key', // Replace or move to .env
-  resave: false,
-  saveUninitialized: true,
-}));
 
-// INSERTED MIDDLEWARE HERE
+// JWT authentication middleware (attach req.user)
+app.use(authenticateJWT);
+
+// Print login status for every request
 app.use((req, res, next) => {
-  res.locals.session = req.session;
+  if (req.user && req.user.userId) {
+    console.log(`Logged in as: ${req.user.firstName || req.user.email} (${req.user.userType})`);
+  } else {
+    console.log('Not logged in');
+  }
   next();
 });
 
 // Routes
 app.use('/', indexRouter);
-
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
