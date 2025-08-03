@@ -121,19 +121,16 @@ exports.loginPagePost = async (req, res, next) => {
                 error: 'Please provide both email and password'
             });
         }
-
+        // checks email
         const user = await schemas.profile.findOne({ email }).exec();
-
         if (!user) {
             return res.render('log_in', {
                 error: 'Invalid email or password',
                 email
             });
         }
-
-        const bcrypt = require('bcrypt');
-        const match = await bcrypt.compare(password, user.hashedPassword);
-
+        // Plaintext password check (not secure, for demonstration only)
+        const match = password === user.hashedPassword;
         if (!match) {
             return res.render('log_in', {
                 error: 'Invalid email or password',
@@ -142,26 +139,26 @@ exports.loginPagePost = async (req, res, next) => {
         }
 
         // ✅ Set session
-        req.session.userId = user._id;
-        req.session.userType = user.type;
+        //req.session.userId = user._id;
+        //req.session.userType = user.type;
 
         // ✅ Optionally update lastLogin
-        user.lastLogin = new Date();
-        await user.save();
+        //user.lastLogin = new Date();
+        //await user.save();
 
         // ✅ Redirect based on role
-        if (user.type === 'Admin' || 'Lab Technician') {
-            return res.redirect('/admin');
-        } else {
-            return res.redirect(`/user/${user._id}`); // will this redirect to the user's profile page???
-        }
+        //if (user.type === 'Admin' || 'Lab Technician') {
+        //    return res.redirect('/admin');
+        //} else {
+        //    return res.redirect(`/user/${user._id}`); // will this redirect to the user's profile page???
+        //}
 
     } catch (error) {
         console.error('Login error:', error);
-        res.render('log_in', {
-            error: 'An error occurred during login',
+        //res.render('log_in', {
+        //    error: 'An error occurred during login',
             email: req.body.email
-        });
+        //});
     }
 };
 
