@@ -539,73 +539,6 @@ exports.adminUsers = async (req, res) => {
         });
     }
 };
-exports.editProfile = async (req, res) => {
-
-
-
-    try {
-
-
-        const { firstName, lastName, biography } = req.body;
-
-
-        const updateFields = {
-
-
-            firstName,
-
-
-            lastName,
-
-
-            biography,
-
-
-        };
-
-
-
-
-
-        // Handle optional image upload (Cloudinary)
-
-
-        if (req.file) {
-
-
-            const result = await cloudinary.uploader.upload(req.file.path);
-
-
-            updateFields.img = result.public_id;
-
-
-        }
-
-
-
-
-
-        await Profile.findByIdAndUpdate(req.params.id, updateFields);
-
-
-        res.redirect(`/user/${req.params.id}`);
-
-
-    } catch (error) {
-
-
-        console.error("Error editing profile:", error);
-
-
-        res.status(500).send("Error updating profile.");
-
-
-    }
-
-
-};
-
-
 // Delete user by MongoDB _id (ObjectId) passed as :id in the route
 exports.UserDelete = async (req, res) => {
     try {
@@ -629,6 +562,75 @@ exports.UserDelete = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error deleting user'
+        });
+    }
+};
+exports.editProfile = async (req, res) => {
+    try {
+        const profileId = req.params.id;
+        const { firstName, lastName, biography } = req.body;
+
+        console.log('Current user:', req.user);
+        console.log('Attempting to edit profile:', profileId);
+        console.log('Update data:', { firstName, lastName, biography });
+
+        // Check if user is logged in
+        if (!req.user || !req.user.userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'You must be logged in to edit profiles'
+            });
+        }
+
+        // Check if user has permission to edit this profile
+        if (req.user.userId !== profileId && req.user.userType !== 'Admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'You do not have permission to edit this profile'
+            });
+        }
+
+        // Validate MongoDB ObjectId format
+        if (!profileId || !profileId.match(/^[0-9a-fA-F]{24}$/)) {
+            const error = `Invalid profile ID format: ${profileId}. Expected a 24-character hexadecimal string.`;
+            console.log(error);
+            return res.status(400).json({
+                success: false,
+                error: error
+            });
+        }
+
+        // Update the profile directly with findByIdAndUpdate
+        const updatedProfile = await Profile.findByIdAndUpdate(
+            profileId,
+            {
+                firstName,
+                lastName,
+                bio: biography // Note: matches your schema field name
+            },
+            { 
+                new: true,      // Return updated document
+                runValidators: true // Run schema validations
+            }
+        );
+
+        if (!updatedProfile) {
+            return res.status(404).json({
+                success: false,
+                error: 'Profile not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            profile: updatedProfile
+        });
+
+    } catch (error) {
+        console.error('Profile update error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating profile'
         });
     }
 };

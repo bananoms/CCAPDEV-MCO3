@@ -36,8 +36,7 @@ router.delete('/admin/delete/:id', isLoggedIn, isLabTech, controller.adminDelete
 router.get('/admin/users', isLoggedIn, isAdmin, controller.adminUsers);
 router.delete('/admin/users/delete/:id', isLoggedIn, isAdmin, controller.UserDelete);
 
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' }); // or use cloud config
-router.post('/user/edit/:id', upload.single('image'), controller.editProfile);
+// User profile edit route
+router.put('/user/edit/:id', isLoggedIn, controller.editProfile);
 
 module.exports = router;

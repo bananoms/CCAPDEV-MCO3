@@ -24,11 +24,11 @@ html
 
           if user && user.userId
             if (user.userType) === 'Admin'
-              span.nav-link Hi, Admin
+              a.nav-link(href=`/user/${user.userId}`) Hi, Admin
             else if user.userType === 'Lab Technician'
-              span.nav-link Hi, LabTech
+              a.nav-link(href=`/user/${user.userId}`) Hi, LabTech
             else if user.userType === 'Student'
-              span.nav-link Hi, #{user.firstName}
+              a.nav-link(href=`/user/${user.userId}`) Hi, #{user.firstName}
             a.nav-link(href="/log-out") Log Out
           else
             a.nav-link(href="/log-in") Login
