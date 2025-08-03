@@ -150,12 +150,10 @@ exports.loginPagePost = async (req, res, next) => {
         await user.save();
 
         // ✅ Redirect based on role
-        if (user.type === 'Admin') {
+        if (user.type === 'Admin' || 'Lab Technician') {
             return res.redirect('/admin');
-        } else if (user.type === 'Lab Technician') {
-            return res.redirect('/technician-dashboard'); // Create later
         } else {
-            return res.redirect(`/user/${user._id}`);
+            return res.redirect(`/user/${user._id}`); // will this redirect to the user's profile page???
         }
 
     } catch (error) {
@@ -183,13 +181,6 @@ exports.signupPagePost = async (req, res, next) => {
             });
         }
 
-        // Basic validation
-        if (password !== confirmPassword) {
-            return res.render('sign_up', {
-                error: 'Passwords do not match'
-            });
-        }
-
         // Check if user already exists
         const existingUser = await Profile.findOne({ email });
         if (existingUser) {
@@ -197,31 +188,26 @@ exports.signupPagePost = async (req, res, next) => {
                 error: 'Email already registered'
             });
         }
-
-        // Possibly for MCO3
-        // Only allow 'student' type during sign-up
-        // if (type !== 'student') {
-        //     return res.render('sign_up', {
-        //         error: 'Only student accounts can be created through sign-up'
-        //     });
-        // }
-
+        // Generate salt and hash password
+        //const saltRounds = 12;
+        //const salt = await bcrypt.genSalt(saltRounds);
+        //const hashedPassword = await bcrypt.hash(password, salt);
+        
         // Create new user profile
         const newProfile = new Profile({
             firstName,
             lastName,
             email,
-            type,
+            type: 'Student', // Default type, or get from form if you add a type selector
             hashedPassword: password,
             salt: 'dummy-salt',
             rem: false,
             img: '',
             bio: ''
         });
-
+        
         await newProfile.save();
-
-        res.redirect('/');
+        res.redirect('/log-in');
     } catch (error) {
         console.error('Signup error:', error);
         res.render('sign_up', {

@@ -14,14 +14,14 @@ block content
         .form-group
           input.name-input.form-control(type="text", name="lastName", placeholder="Last Name", required)
         .form-group
-          input.form-control(
+          p#signup-email-error.text-danger(style="display: none; margin-bottom: 10px;") Please use your DLSU email address (@dlsu.edu.ph).
+          input.form-control#signup-email(
             type="email",
             name="email",
             placeholder="Email Address",
-            pattern=".*@dlsu\\.edu\\.ph$"
-            title="Please use your DLSU email (@dlsu.edu.ph)"
-            required
+            oninput="checkSignupEmail()"
           )
+        
         p#password-error.text-danger(style="display: none; margin-bottom: 10px;") Passwords do not match.
         p#requirementsError.text-danger(style="display: none; margin-bottom: 10px;") Password needs to be at least 8 characters and contain at least one special character.
         .form-group#password-group
@@ -48,17 +48,46 @@ block content
             | Already have an account?
             a(href="/log-in")    Login
   script.
+    function checkSignupEmail() {
+      const email = document.getElementById('signup-email').value.trim();
+      const emailError = document.getElementById('signup-email-error');
+      const submitBtn = document.getElementById('submit-btn');
+      const dlsuPattern = /@dlsu\.edu\.ph$/i;
+      if (email === '' || !dlsuPattern.test(email)) {
+        emailError.style.display = 'block';
+        submitBtn.disabled = true;
+      } else {
+        emailError.style.display = 'none';
+        // Only enable if other validations pass
+        checkSignupFormEnable();
+      }
+    }
+    function checkSignupFormEnable() {
+      // Enable submit if all fields are valid
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const dlsuPattern = /@dlsu\.edu\.ph$/i;
+      const minLength = password.length >= 8;
+      const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+      const meetsRequirements = minLength && hasSpecialChar;
+      const passwordsMatch = password === confirmPassword;
+      const submitBtn = document.getElementById('submit-btn');
+      if (dlsuPattern.test(email) && meetsRequirements && passwordsMatch && password !== '' && confirmPassword !== '') {
+        submitBtn.disabled = false;
+      } else {
+        submitBtn.disabled = true;
+      }
+    }
     function checkPasswordRequirements() {
       const password = document.getElementById('password').value;
       const requirementsError = document.getElementById('requirementsError');
       const passwordGroup = document.getElementById('password-group');
       const submitBtn = document.getElementById('submit-btn');
-      
       // Check password requirements
       const minLength = password.length >= 8;
       const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
       const meetsRequirements = minLength && hasSpecialChar;
-      
       if (password !== '' && !meetsRequirements) {
         requirementsError.style.display = 'block';
         passwordGroup.style.border = '2px solid red';
@@ -66,11 +95,10 @@ block content
       } else {
         requirementsError.style.display = 'none';
         passwordGroup.style.border = '';
-        // Only enable submit button if passwords also match
-        checkPasswords();
+        // Only enable submit button if passwords also match and email is valid
+        checkSignupFormEnable();
       }
     }
-    
     function checkPasswords() {
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
@@ -78,16 +106,13 @@ block content
       const submitBtn = document.getElementById('submit-btn');
       const passwordGroup = document.getElementById('password-group');
       const confirmPasswordGroup = document.getElementById('confirm-password-group');
-      
       // Check if passwords match
       const passwordsMatch = password === confirmPassword;
       const bothFieldsFilled = password !== '' && confirmPassword !== '';
-      
       // Check password requirements
       const minLength = password.length >= 8;
       const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
       const meetsRequirements = minLength && hasSpecialChar;
-      
       if (bothFieldsFilled && !passwordsMatch) {
         errorElement.style.display = 'block';
         passwordGroup.style.border = '2px solid red';
@@ -96,34 +121,29 @@ block content
       } else {
         errorElement.style.display = 'none';
         confirmPasswordGroup.style.border = '';
-        
         // Only remove red border from password field if it meets requirements
         if (meetsRequirements || password === '') {
           passwordGroup.style.border = '';
         }
-        
-        // Only enable submit button if both conditions are met
-        if (passwordsMatch && meetsRequirements && bothFieldsFilled) {
-          submitBtn.disabled = false;
-        } else {
-          submitBtn.disabled = true;
-        }
+        // Only enable submit button if all conditions are met
+        checkSignupFormEnable();
       }
     }
-    
     function validateForm() {
+      const email = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
-      
+      const dlsuPattern = /@dlsu\.edu\.ph$/i;
       // Check password requirements
       const minLength = password.length >= 8;
       const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
       const passwordsMatch = password === confirmPassword;
-      
       // Final validation check
-      if (!minLength || !hasSpecialChar || !passwordsMatch) {
+      if (!dlsuPattern.test(email) || !minLength || !hasSpecialChar || !passwordsMatch) {
+        if (!dlsuPattern.test(email)) {
+          document.getElementById('signup-email-error').style.display = 'block';
+        }
         return false;
       }
-      
       return true;
     }
