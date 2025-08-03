@@ -141,12 +141,13 @@ exports.loginPagePost = async (req, res, next) => {
             });
         }
 
-        // Generate JWT
+        // Generate JWT (include firstName)
         const token = jwt.sign(
             {
                 userId: user._id,
                 userType: user.type,
-                email: user.email
+                email: user.email,
+                firstName: user.firstName
             },
             JWT_SECRET,
             { expiresIn: '2h' }

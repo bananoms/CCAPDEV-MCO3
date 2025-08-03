@@ -14,14 +14,13 @@ html
           a.nav-link(href="/") Home
           a.nav-link(href="/about") About
 
-          if session && session.userType === 'Admin'
-            a.nav-link(href="/admin") Admin Panel
-          if session && session.userType === 'Lab Technician'
-            a.nav-link(href="/admin/edit") Manage Reservations
-          if session && session.userType === 'Student'
-            a.nav-link(href="/user/" + session.userId) My Profile
-
-          if session && session.userId
+          if user && user.userId
+            if (user.userType) === 'Admin'
+              span.nav-link Hi, Admin
+            else if user.userType === 'Lab Technician'
+              span.nav-link Hi, LabTech
+            else if user.userType === 'Student'
+              span.nav-link Hi, #{user.firstName}
             a.nav-link(href="/log-out") Log Out
           else
             a.nav-link(href="/log-in") Login
