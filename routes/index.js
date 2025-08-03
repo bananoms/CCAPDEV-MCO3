@@ -1,4 +1,4 @@
-const { isLoggedIn, isAdmin, isTechnician, isStudent } = require('../middleware');
+const { isLoggedIn, isAdmin } = require('../middleware');
 const express = require('express');
 const router = express.Router();
 
@@ -29,6 +29,5 @@ router.get('/admin/edit', isLoggedIn, isAdmin, controller.adminEditPageGet);
 router.get('/admin/edit/:id', isLoggedIn, isAdmin, controller.adminEditReserve);
 router.put('/admin/edit/:id', isLoggedIn, isAdmin, controller.adminEditUpdate);
 router.delete('/admin/delete/:id', isLoggedIn, isAdmin, controller.adminDelete);
-
 
 module.exports = router;

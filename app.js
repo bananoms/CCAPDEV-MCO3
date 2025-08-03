@@ -1,4 +1,4 @@
-const session = require('express-session');
+// const session = require('express-session');
 require('dotenv').config();
 var createError = require('http-errors');
 var express = require('express');
@@ -9,6 +9,7 @@ var logger = require('morgan');
 const mongoose = require('mongoose');
 
 var indexRouter = require('./routes/index');
+const { authenticateJWT } = require('./middleware');
 
 const app = express();
 
@@ -22,6 +23,8 @@ app.set('view engine', 'pug');
 
 app.use((req, res, next) => {
   res.locals.url = req.path;
+  // Make user info available to all views
+  res.locals.user = req.user || null;
   next();
 });
 
@@ -30,22 +33,18 @@ mongoose.connect(process.env.DB);
 mongoose.promise = global.promise;
 mongoose.connection.on('error', (error) => console.error(error.message));
 
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({
-  secret: 'your-secret-key', // Replace or move to .env
-  resave: false,
-  saveUninitialized: true,
-}));
 
-// INSERTED MIDDLEWARE HERE
-app.use((req, res, next) => {
-  res.locals.session = req.session;
-  next();
-});
+// JWT authentication middleware (attach req.user)
+app.use(authenticateJWT);
+
+
+
 
 // Routes
 app.use('/', indexRouter);

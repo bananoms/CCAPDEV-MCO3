@@ -112,7 +112,10 @@ exports.loginPageGet = (req,res) => {
 }
 
 
-exports.loginPagePost = async (req, res, next) => {
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+
+exports.loginPagePost = async (req, res, next) => { 
     try {
         const { email, password } = req.body;
 
@@ -138,27 +141,40 @@ exports.loginPagePost = async (req, res, next) => {
             });
         }
 
-        // ✅ Set session
-        //req.session.userId = user._id;
-        //req.session.userType = user.type;
+        // Generate JWT
+        const token = jwt.sign(
+            {
+                userId: user._id,
+                userType: user.type,
+                email: user.email
+            },
+            JWT_SECRET,
+            { expiresIn: '2h' }
+        );
 
-        // ✅ Optionally update lastLogin
-        //user.lastLogin = new Date();
-        //await user.save();
+        // Set JWT as HTTP-only cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 2 * 60 * 60 * 1000 // 2 hours
+        });
+        // Optionally update lastLogin
+        // user.lastLogin = new Date();
+        // await user.save();
 
-        // ✅ Redirect based on role
-        //if (user.type === 'Admin' || 'Lab Technician') {
-        //    return res.redirect('/admin');
-        //} else {
-        //    return res.redirect(`/user/${user._id}`); // will this redirect to the user's profile page???
-        //}
+        // Redirect based on role
+        if (user.type === 'Admin' || user.type === 'Lab Technician') {
+            return res.redirect('/admin');
+        } else {
+            return res.redirect(`/user/${user._id}`);
+        }
 
     } catch (error) {
         console.error('Login error:', error);
-        //res.render('log_in', {
-        //    error: 'An error occurred during login',
+        res.render('log_in', {
+            error: 'An error occurred during login',
             email: req.body.email
-        //});
+        });
     }
 };
 
@@ -177,7 +193,6 @@ exports.signupPagePost = async (req, res, next) => {
                 error: 'Please use your DLSU email address (@dlsu.edu.ph)'
             });
         }
-
         // Check if user already exists
         const existingUser = await Profile.findOne({ email });
         if (existingUser) {
@@ -319,7 +334,7 @@ exports.UserGet = async (req, res) => {
                 createdAt: userProfile.createdAt
             },
             userReservations: formattedReservations,
-            currentUserId: req.session?.userId || null // For checking if viewing own profile
+            currentUserId: req.user?.userId || null // For checking if viewing own profile
         });
 
     } catch (error) {
