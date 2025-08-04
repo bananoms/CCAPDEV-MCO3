@@ -44,7 +44,6 @@ exports.reservePagePost = async (req, res) => {
         if (!lab) throw new Error('Lab is required');
         if (!resDate || !resDate.start || !resDate.end) throw new Error('Valid reservation dates are required');
 
-        // Use user from JWT if available, else from request body (fallback)
         let userId = req.user && req.user.userId ? req.user.userId : user;
 
         const newReservation = new Reservations({
@@ -163,9 +162,6 @@ exports.loginPagePost = async (req, res, next) => {
             secure: process.env.NODE_ENV === 'production',
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
-        // Optionally update lastLogin
-        // user.lastLogin = new Date();
-        // await user.save();
 
         // Redirect based on role
         if (user.type === 'Admin' || user.type === 'Lab Technician') {
@@ -213,10 +209,6 @@ exports.signupPagePost = async (req, res, next) => {
                 error: 'Email already registered'
             });
         }
-        // Generate salt and hash password
-        //const saltRounds = 12;
-        //const salt = await bcrypt.genSalt(saltRounds);
-        //const hashedPassword = await bcrypt.hash(password, salt);
 
         // Create new user profile
         const newProfile = new Profile({
@@ -240,8 +232,6 @@ exports.signupPagePost = async (req, res, next) => {
         });
     }
 };
-
-
 
 exports.getReservations = async (req, res) => {
     try {
@@ -315,11 +305,10 @@ exports.UserGet = async (req, res) => {
             // Assuming reservations have a 'userId' field that references the user
             userReservations = await Reservation.find({ userId: userId })
                 .populate('labId', 'name') // If you have lab references
-                .sort({ reservationDate: -1 }) // Sort by most recent
+                .sort({ reservationDate: -1 })
                 .limit(10); // Limit to recent 10 reservations
         } catch (reservationError) {
             console.log('No reservations found or Reservation model not available:', reservationError.message);
-            // Continue without reservations if model doesn't exist
         }
 
         // Format reservations for the mixin
@@ -429,13 +418,12 @@ exports.adminEditUpdate = async (req, res) => {
             });
         }
 
-        // Find and update the reservation
         // Replace 'Reservation' with your actual model name
         const reservation = await Reservations.findByIdAndUpdate(
             reservationId,
             updatedReservation,
             {
-                new: true,           // Return the updated document
+                new: true,
                 runValidators: true  // Run schema validations
             }
         );
@@ -539,6 +527,7 @@ exports.adminUsers = async (req, res) => {
         });
     }
 };
+
 // Delete user by MongoDB _id (ObjectId) passed as :id in the route
 exports.UserDelete = async (req, res) => {
     try {
@@ -606,10 +595,10 @@ exports.editProfile = async (req, res) => {
             {
                 firstName,
                 lastName,
-                bio: biography // Note: matches your schema field name
+                bio: biography
             },
             { 
-                new: true,      // Return updated document
+                new: true,
                 runValidators: true // Run schema validations
             }
         );
